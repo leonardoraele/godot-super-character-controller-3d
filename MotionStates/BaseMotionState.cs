@@ -18,6 +18,7 @@ public abstract partial class BaseMotionState : Node
     protected SuperPlatformerController Character { get; private set; } = null!;
 
 	public ulong DurationActiveMs => Time.GetTicksMsec() - this.ActivationTime;
+	public bool IsActive => this.Character.State == this;
 
     public override void _EnterTree()
     {

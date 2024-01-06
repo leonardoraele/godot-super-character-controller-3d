@@ -119,15 +119,15 @@ public partial class SuperPlatformerController : CharacterBody2D
 	/// </summary>
 	public int AirDashesPerformedCounter = 0;
 	public SuperPlatformerInputController InputController { get; private set; } = null!; // Initialized on _Ready
-    public Vector2 LastOnFloorPosition { get; private set; }
-    private int _facingDirection = 0;
+	public Vector2 LastOnFloorPosition { get; private set; }
+	private int _facingDirection = 0;
 	public Dictionary<string, BaseMotionState> StateDict = new Dictionary<string, BaseMotionState>();
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // PROPERTIES
-    // -----------------------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------------
+	// PROPERTIES
+	// -----------------------------------------------------------------------------------------------------------------
 
-    public bool IsFacingLeft => this.FacingDirection < 0;
+	public bool IsFacingLeft => this.FacingDirection < 0;
 	public bool IsFacingRight => this.FacingDirection > 0;
 	/// <summary>
 	/// Determines the direction the character is facing. Any value lower than 0 means the character is facing left,
@@ -139,12 +139,12 @@ public partial class SuperPlatformerController : CharacterBody2D
 		set => this._facingDirection = Math.Sign(value);
 	}
 
-    // -----------------------------------------------------------------------------------------------------------------
-    // METHODS
-    // -----------------------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------------
+	// METHODS
+	// -----------------------------------------------------------------------------------------------------------------
 
-    public override void _Ready()
-    {
+	public override void _Ready()
+	{
 		base._Ready();
 		this.SetupCharacterBody2D();
 		this.RegisterBuiltinMotionStates();
@@ -154,13 +154,21 @@ public partial class SuperPlatformerController : CharacterBody2D
 		this.JumpSettings ??= new Platformer2DJumpSettings();
 		this.FacingDirection = 1;
 		this.ResetState();
-    }
+	}
 
-    private void RegisterBuiltinMotionStates()
-    {
+	public override void _EnterTree()
+	{
+		base._EnterTree();
+		foreach (Node child in this.GetChildren()) {
+			this.OnNodeEnteredTree(child);
+		}
+	}
+
+	private void RegisterBuiltinMotionStates()
+	{
 		this.ChildEnteredTree += this.OnNodeEnteredTree;
 		this.ChildExitingTree += this.OnNodeExitingTree;
-        this.AddChild(new OnFootState() { Name = nameof(OnFootState) });
+		this.AddChild(new OnFootState() { Name = nameof(OnFootState) });
 		this.AddChild(new FallingState() { Name = nameof(FallingState) });
 		this.AddChild(new WallClimbingState() { Name = nameof(WallClimbingState) });
 		this.AddChild(new WallSlidingState() { Name = nameof(WallSlidingState) });
@@ -173,7 +181,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 		this.AddChild(new JumpWindupState() { Name = nameof(JumpWindupState) });
 		this.AddChild(new LandingRecoveryState() { Name = nameof(LandingRecoveryState) });
 		this.AddChild(new LandingRecoveryState() { Name = nameof(LandingRecoveryState) });
-    }
+	}
 
 	private void OnNodeEnteredTree(Node node)
 	{
@@ -189,7 +197,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 		}
 	}
 
-    private void SetupCharacterBody2D()
+	private void SetupCharacterBody2D()
 	{
 		// Any change that is made to the CharacterBody2D should be properly logged to the user.
 		if (this.MotionMode != MotionModeEnum.Grounded) {
@@ -198,14 +206,14 @@ public partial class SuperPlatformerController : CharacterBody2D
 		}
 	}
 
-    public override void _Process(double delta)
-    {
-        base._Process(delta);
+	public override void _Process(double delta)
+	{
+		base._Process(delta);
 		this.InputController.Update();
 		this.UpdateLastOnFloorPosition();
 		this.UpdateFacing();
 		this.State?.OnProcessState((float) delta);
-    }
+	}
 
 	private void UpdateLastOnFloorPosition()
 	{
@@ -222,16 +230,16 @@ public partial class SuperPlatformerController : CharacterBody2D
 		}
 	}
 
-    public override void _PhysicsProcess(double delta)
-    {
-        base._PhysicsProcess(delta);
+	public override void _PhysicsProcess(double delta)
+	{
+		base._PhysicsProcess(delta);
 		this.State?.OnPhysicsProcessState((float) delta);
-    }
+	}
 
-    public void TransitionMotionState<T>(Variant? data = null) where T : BaseMotionState
-    {
+	public void TransitionMotionState<T>(Variant? data = null) where T : BaseMotionState
+	{
 		this.TransitionMotionState(typeof(T).Name, data);
-    }
+	}
 
 	public void TransitionMotionState(string nextStateName, Variant? data = null)
 	{
@@ -291,10 +299,10 @@ public partial class SuperPlatformerController : CharacterBody2D
 		}
 	}
 
-    public void Accelerate(Vector2 targetVelocity, Vector2 acceleration)
-    {
+	public void Accelerate(Vector2 targetVelocity, Vector2 acceleration)
+	{
 		this.Velocity = SuperPlatformerController.ApplyAcceleration(this.Velocity, targetVelocity, acceleration);
-    }
+	}
 
 	/// <summary>
 	/// Accelerates the character toward the given target velocity. The acceleration is applied to each axis.
@@ -308,7 +316,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 	/// This method only changes the character's Velocity. You still have to call <code>MoveAndSlide</code> or similar
 	/// to actually move the character.
 	/// </summary>
-    public void Accelerate(
+	public void Accelerate(
 		float targetVelocityX,
 		float targetVelocityY,
 		float accelerationX = float.PositiveInfinity,
@@ -322,7 +330,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 			accelerationX,
 			accelerationY
 		);
-    }
+	}
 
 	/// <summary>
 	/// Same as <code>Accelerate</code> but only applies acceleration to the X axis.

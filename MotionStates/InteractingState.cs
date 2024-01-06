@@ -5,7 +5,7 @@ namespace Raele.SuperPlatformer;
 
 public partial class InteractingState : BaseMotionState
 {
-	public double DurationSec;
+	public double DurationSec = 1;
 	public string? Hint;
 	public Callable? OnFinished;
 	public bool Ended { get; private set; } = false;
