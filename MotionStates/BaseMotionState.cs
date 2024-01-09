@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace Raele.SuperCharacterController3D.MotionStates;
+namespace Raele.SuperCharacter3D.MotionStates;
 
 public abstract partial class BaseMotionState : Node
 {
@@ -14,17 +14,17 @@ public abstract partial class BaseMotionState : Node
 	}
 
 	public ulong ActivationTime { get; private set; } = 0;
-    protected SuperCharacterController3D Character { get; private set; } = null!;
+    protected SuperCharacter3DController Character { get; private set; } = null!;
 
 	public ulong DurationActiveMs => Time.GetTicksMsec() - this.ActivationTime;
 
     public override void _EnterTree()
     {
         base._EnterTree();
-		if (this.GetParent() is SuperCharacterController3D character) {
+		if (this.GetParent() is SuperCharacter3DController character) {
 			this.Character = character;
 		} else {
-			GD.PushError($"MotionState node of type \"{this.GetType().Name}\" must be a child of {typeof(SuperCharacterController3D).Name}");
+			GD.PushError($"MotionState node of type \"{this.GetType().Name}\" must be a child of {typeof(SuperCharacter3DController).Name}");
 		}
 	}
 
@@ -61,7 +61,8 @@ public abstract partial class BaseMotionState : Node
 		float maxSpeedUnPSec,
 		float accelerationUnPSecSq
 	) {
-		Vector2 velocityXZ = maxSpeedUnPSec * this.Character.InputController.MovementInput.Normalized();
+		Vector2 velocityXZ = maxSpeedUnPSec * this.Character.InputController.MovementInput.Normalized()
+			.Rotated(this.CalculateCameraRotationAngleDg());
 		return (velocityXZ, Vector2.One * accelerationUnPSecSq * delta);
 	}
 
@@ -91,7 +92,7 @@ public abstract partial class BaseMotionState : Node
 			this.Character.ApplyFloorSnap();
 		}
 		return (
-			this.Character.Settings.Movement.DownwardVelocityOnFloor * -1,
+			/*this.Character.Settings.Movement.DownwardVelocityOnFloor * -1*/ 0,
 			float.PositiveInfinity
 		);
 	}
@@ -101,5 +102,25 @@ public abstract partial class BaseMotionState : Node
 		float velocityY = this.Character.Settings.Jump.MaxFallSpeedUnPSec * -1;
 		float accelerationY = this.Character.Settings.Jump.FallAccelerationUnPSecSq * delta;
 		return (velocityY, accelerationY);
+	}
+
+	protected virtual float CalculateCameraRotationAngleDg() {
+		return this.Character.GetViewport().GetCamera3D().Rotation.Y * -1;
+	}
+
+	/// <summary>
+	/// Calculates target rotation angle of the character based on the user input.
+	/// </summary>
+	protected virtual float CalculateRotationAngleDg()
+	{
+		return this.Character.InputController.MovementInput.Length() > 0.01f
+			? this.Character.InputController.MovementInput.Rotated(this.CalculateCameraRotationAngleDg())
+				.AngleTo(Vector2.Up)
+			: this.Character.Rotation.Y;
+	}
+
+	protected Vector3 CalculateRotationEuler()
+	{
+		return Vector3.Up * this.CalculateRotationAngleDg();
 	}
 }

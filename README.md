@@ -4,5 +4,5 @@
 
 In the project's `addons` folder, do:
 ```
-git submodule add <this_repository_clone_uri> SuperCharacterController3D
+git submodule add <this_repository_clone_uri> SuperCharacter3D
 ```

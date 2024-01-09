@@ -1,4 +1,4 @@
-namespace Raele.SuperCharacterController3D.MotionStates;
+namespace Raele.SuperCharacter3D.MotionStates;
 
 public abstract partial class BaseGroundedState : BaseMotionState
 {

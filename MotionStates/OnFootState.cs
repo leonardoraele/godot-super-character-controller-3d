@@ -1,6 +1,7 @@
+using System;
 using Godot;
 
-namespace Raele.SuperCharacterController3D.MotionStates;
+namespace Raele.SuperCharacter3D.MotionStates;
 
 public partial class OnFootState : BaseGroundedState
 {
@@ -25,6 +26,9 @@ public partial class OnFootState : BaseGroundedState
 		// Calculate vertical velocity
 		(float velocityY, float accelerationY) = this.CalculateVerticalOnFootPhysics();
 		this.Character.AccelerateY(velocityY, accelerationY);
+
+		// Updates facing direction
+		this.Character.Rotation = this.CalculateRotationEuler();
 
 		// Perform movement
 		this.Character.MoveAndSlide();

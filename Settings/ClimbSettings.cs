@@ -1,9 +1,9 @@
 using Godot;
 
-namespace Raele.SuperCharacterController3D;
+namespace Raele.SuperCharacter3D;
 
 [GlobalClass]
-public partial class SuperPlatformer3DClimbSettings : Resource
+public partial class ClimbSettings : Resource
 {
 	/// <summary>
 	/// If empty, character will be able to climb any vertical surface that is recognized as a wall. See CharacterBody3D

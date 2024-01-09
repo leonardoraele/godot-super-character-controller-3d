@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace Raele.SuperCharacterController3D.MotionStates;
+namespace Raele.SuperCharacter3D.MotionStates;
 
 public partial class JumpingState : BaseAirState
 {
@@ -12,6 +12,7 @@ public partial class JumpingState : BaseAirState
         base.OnProcessState(delta);
         // Transition Jump -> Jump Canceled
         if (this.Character.Settings.Jump.VariableJumpHeightEnabled
+            && this.DurationActiveMs >= this.Character.Settings.Jump.MinJumpDurationMs
             && !Input.IsActionPressed(this.Character.Settings.Input.JumpAction)
             || this.DurationActiveMs >= this.Character.Settings.Jump.JumpDurationMs
             || this.TimeHitCeiling != null

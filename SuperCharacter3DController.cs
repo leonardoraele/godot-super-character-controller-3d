@@ -1,23 +1,31 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using Raele.SuperCharacterController3D.MotionStates;
+using Raele.SuperCharacter3D.MotionStates;
 
-namespace Raele.SuperCharacterController3D;
+namespace Raele.SuperCharacter3D;
 
 // TODO Make presets for:
-// - Devil May Cry 3
+// P1:
 // - Prince of Persia Sands of Time
 // - Super Mario 64
-// - Crash Bandicoot
+// - Crash Bandicoot 4
+// - Minecraft
+// - Half-Life 2
+// P2:
 // - Fall Guys
-public partial class SuperCharacterController3D : CharacterBody3D, InputController.ISuperPlatformer3DCharacter
+// - Pseudoregalia
+// - Crash Bandicoot
+// - Super Mario Odyssey
+// - Devil May Cry 3
+// - A Hat in Time
+public partial class SuperCharacter3DController : CharacterBody3D, InputController.ISuperPlatformer3DCharacter
 {
 	// -----------------------------------------------------------------------------------------------------------------
 	// EXPORTED FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	[Export] public SuperPlatformer3DBaseSettings Settings { get; private set; } = null!; // Initialized on _Ready
+	[Export] public SuperCharacter3DSettings Settings { get; private set; } = null!; // Initialized on _Ready
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// SIGNALS
@@ -42,7 +50,7 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
     public override void _Ready()
     {
 		base._Ready();
-		this.Settings ??= new SuperPlatformer3DBaseSettings();
+		this.Settings ??= new SuperCharacter3DSettings();
 		this.InputController = new InputController(this);
 		this.SetupCharacterBody3D();
 		RegisterBuiltinMotionStates();
@@ -83,7 +91,7 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 	{
 		// Any change that is made to the CharacterBody2D should be properly logged to the user.
 		if (this.MotionMode != MotionModeEnum.Grounded) {
-			GD.PushWarning(nameof(SuperCharacterController3D), "expects CharacterBody2D to be in Grounded mode. Setting it now.");
+			GD.PushWarning(nameof(SuperCharacter3DController), "expects CharacterBody2D to be in Grounded mode. Setting it now.");
 			this.MotionMode = MotionModeEnum.Grounded;
 		}
 	}
@@ -117,12 +125,12 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 	public void TransitionMotionState(string nextStateName, Variant? data = null)
 	{
 		if (!this.StateDict.TryGetValue(nextStateName, out BaseMotionState? nextState)) {
-			throw new Exception($"Failed to transition to motion state \"{nextStateName}\". Cause: State not found. Did you forget to add it as a child node of {nameof(SuperCharacterController3D)}?");
+			throw new Exception($"Failed to transition to motion state \"{nextStateName}\". Cause: State not found. Did you forget to add it as a child node of {nameof(SuperCharacter3DController)}?");
 		}
 		BaseMotionState? previousState = this.State;
 		if (previousState != null) {
 			try {
-				GD.PrintS(nameof(SuperCharacterController3D), "Exiting state:", previousState.Name);
+				GD.PrintS(nameof(SuperCharacter3DController), "Exiting state:", previousState.Name);
 				previousState.OnExit(new BaseMotionState.TransitionInfo() {
 					PreviousState = previousState.Name,
 					NextState = nextStateName,
@@ -137,7 +145,7 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 			return;
 		}
 		try {
-			GD.PrintS(nameof(SuperCharacterController3D), "Entering state:", nextState.Name);
+			GD.PrintS(nameof(SuperCharacter3DController), "Entering state:", nextState.Name);
 			nextState.OnEnter(new BaseMotionState.TransitionInfo() {
 				PreviousState = this.State?.Name,
 				NextState = nextState.Name,
@@ -174,12 +182,12 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 
     public void Accelerate(Vector3 targetVelocity, Vector3 acceleration)
     {
-		this.Velocity = SuperCharacterController3D.ApplyAcceleration(this.Velocity, targetVelocity, acceleration);
+		this.Velocity = SuperCharacter3DController.ApplyAcceleration(this.Velocity, targetVelocity, acceleration);
     }
 
     public void Accelerate(Vector2 targetVelocityXZ, float targetVelocityY, Vector2 accelerationXZ, float accelerationY)
 	{
-		this.Velocity = SuperCharacterController3D.ApplyAcceleration(
+		this.Velocity = SuperCharacter3DController.ApplyAcceleration(
 			this.Velocity.X,
 			this.Velocity.Y,
 			this.Velocity.Z,
@@ -212,7 +220,7 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 		float accelerationY = float.PositiveInfinity,
 		float accelerationZ = float.PositiveInfinity
 	) {
-		this.Velocity = SuperCharacterController3D.ApplyAcceleration(
+		this.Velocity = SuperCharacter3DController.ApplyAcceleration(
 			this.Velocity.X,
 			this.Velocity.Y,
 			this.Velocity.Z,
@@ -231,9 +239,9 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 	public void AccelerateXZ(Vector2 targetVelocityXZ, Vector2 accelerationXZ)
 	{
 		this.Velocity = new Vector3(
-			SuperCharacterController3D.ApplyAcceleration(this.Velocity.X, targetVelocityXZ.X, accelerationXZ.X),
+			SuperCharacter3DController.ApplyAcceleration(this.Velocity.X, targetVelocityXZ.X, accelerationXZ.X),
 			this.Velocity.Y,
-			SuperCharacterController3D.ApplyAcceleration(this.Velocity.Z, targetVelocityXZ.Y, accelerationXZ.Y)
+			SuperCharacter3DController.ApplyAcceleration(this.Velocity.Z, targetVelocityXZ.Y, accelerationXZ.Y)
 		);
 	}
 
@@ -244,14 +252,14 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 	{
 		this.Velocity = new Vector3(
 			this.Velocity.X,
-			SuperCharacterController3D.ApplyAcceleration(this.Velocity.Y, targetVelocityY, accelerationY),
+			SuperCharacter3DController.ApplyAcceleration(this.Velocity.Y, targetVelocityY, accelerationY),
 			this.Velocity.Z
 		);
 	}
 
 	public static Vector3 ApplyAcceleration(Vector3 currentVelocity, Vector3 targetVelocity, Vector3 acceleration)
 	{
-		return SuperCharacterController3D.ApplyAcceleration(
+		return SuperCharacter3DController.ApplyAcceleration(
 			currentVelocity.X,
 			currentVelocity.Y,
 			currentVelocity.Z,
@@ -276,9 +284,9 @@ public partial class SuperCharacterController3D : CharacterBody3D, InputControll
 		float accelerationZ
 	) {
 		return new Vector3(
-			SuperCharacterController3D.ApplyAcceleration(currentVelocityX, targetVelocityX, accelerationX),
-			SuperCharacterController3D.ApplyAcceleration(currentVelocityY, targetVelocityY, accelerationY),
-			SuperCharacterController3D.ApplyAcceleration(currentVelocityZ, targetVelocityZ, accelerationZ)
+			SuperCharacter3DController.ApplyAcceleration(currentVelocityX, targetVelocityX, accelerationX),
+			SuperCharacter3DController.ApplyAcceleration(currentVelocityY, targetVelocityY, accelerationY),
+			SuperCharacter3DController.ApplyAcceleration(currentVelocityZ, targetVelocityZ, accelerationZ)
 		);
 	}
 

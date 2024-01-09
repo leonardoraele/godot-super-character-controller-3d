@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace Raele.SuperCharacterController3D;
+namespace Raele.SuperCharacter3D;
 
 public class InputController
 {
@@ -12,7 +12,7 @@ public class InputController
 		// most updated value, since they might change at runtime if the user tweaks with the inspector variables.
 		// TODO A possible optimization would be to save the buffer duration and input action name in a field if game
 		// was build for production so we don't need to call an anonymous function every frame; but I don't know how to
-		// use (of if it's suppoerted) build-time variables.
+		// use build-time variables. (nor if it's even supported)
 		public Func<ulong> InputBufferDurationMs { get; init; } = () => 0;
 		public Func<string> InputActionName { get; init; } = () => "";
 		public bool ConsumeInput()
@@ -38,7 +38,7 @@ public class InputController
 	private ISuperPlatformer3DCharacter Character;
 
 	public interface ISuperPlatformer3DCharacter {
-		public SuperPlatformer3DBaseSettings Settings { get; }
+		public SuperCharacter3DSettings Settings { get; }
 	}
 
 	public InputController(ISuperPlatformer3DCharacter character)
@@ -61,10 +61,10 @@ public class InputController
 			return;
 		}
 		this.MovementInput = Input.GetVector(
-			this.Character.Settings.Input.MoveLeftAction,
-			this.Character.Settings.Input.MoveRightAction,
-			this.Character.Settings.Input.MoveForwardAction,
-			this.Character.Settings.Input.MoveBackwardAction
+			this.Character.Settings.Input.MoveCameraLeftAction,
+			this.Character.Settings.Input.MoveCameraRightAction,
+			this.Character.Settings.Input.MoveCameraFrontAction,
+			this.Character.Settings.Input.MoveCameraBackAction
 		);
 		this.JumpInputBuffer.Update();
 		this.DashInputBuffer.Update();
