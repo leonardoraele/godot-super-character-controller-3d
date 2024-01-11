@@ -17,5 +17,6 @@ public partial class InputSettings : Resource
 	[Export] public string TurnRightAction { get; private set; } = "character_turn_right";
 	[Export] public string JumpAction { get; private set; } = "character_jump";
 	[Export] public string DashAction { get; private set; } = "character_dash";
-	[Export] public string CrouchAction { get; private set; } = "character_crouch";
+	[Export] public string CrouchHoldAction { get; private set; } = "character_crouch_hold";
+	[Export] public string CrouchToggleAction { get; private set; } = "character_crouch_toggle";
 }

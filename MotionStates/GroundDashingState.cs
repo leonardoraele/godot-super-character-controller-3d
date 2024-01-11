@@ -1,9 +1,18 @@
+using System;
 using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStates;
 
 public partial class GroundDashingState : BaseGroundedState
 {
+    public override void OnEnter(TransitionInfo transition)
+    {
+        base.OnEnter(transition);
+		if (this.Character.Settings.Dash == null) {
+			GD.PushError(nameof(GroundDashingState), "Failed to start Dash action. Cause: Dash settings are missing.");
+			transition.Cancel();
+		}
+    }
     public override void OnExit(BaseMotionState.TransitionInfo transition)
     {
 		base.OnExit(transition);
@@ -32,18 +41,14 @@ public partial class GroundDashingState : BaseGroundedState
 	public override void OnPhysicsProcessState(float delta)
 	{
 		base.OnPhysicsProcessState(delta);
-		Vector2 GetXZ(Vector3 v3d) => new Vector2(v3d.X, v3d.Z);
-		(Vector2 velocityXZ, Vector2 accelerationXZ) = this.Character.Settings.Dash != null
-			? (
-				this.Character.Settings.Dash.MaxSpeedUnPSec * GetXZ(this.Character.Transform.Basis.Z.Normalized()),
-				Vector2.One * this.Character.Settings.Dash.AccelerationUnPSecSq * delta
-			)
-			: this.CalculateHorizontalOnFootPhysics(delta);
-		(float velocityY, float accelerationY) = (this.Character.Settings.Dash?.GroundDashIgnoresGravity ?? false)
+		Vector2 targetVelocityXZ = this.Character.Settings.Dash!.MaxSpeedUnPSec
+			* Vector2.Up.Rotated(this.Character.Rotation.Y * -1);
+		Vector2 accelerationXZ = Vector2.One * this.Character.Settings.Dash.AccelerationUnPSecSq * delta;
+		(float targetVelocityY, float accelerationY) = this.Character.Settings.Dash!.GroundDashIgnoresGravity
 			&& !this.Character.IsOnFloor()
 			? (0, float.PositiveInfinity)
 			: this.CalculateVerticalOnFootPhysics();
-		this.Character.Accelerate(velocityXZ, velocityY, accelerationXZ, accelerationY);
+		this.Character.Accelerate(targetVelocityXZ, targetVelocityY, accelerationXZ, accelerationY);
 		this.Character.MoveAndSlide();
 	}
 }

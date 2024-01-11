@@ -12,6 +12,11 @@ public partial class OnFootState : BaseGroundedState
 			this.Character.TransitionMotionState<JumpingState>();
 		} else if (this.Character.InputController.DashInputBuffer.ConsumeInput()) {
 			this.Character.TransitionMotionState<GroundDashingState>();
+		} else if (
+			Input.IsActionJustPressed(this.Character.Settings.Input.CrouchToggleAction)
+			|| Input.IsActionPressed(this.Character.Settings.Input.CrouchHoldAction)
+		) {
+			this.Character.TransitionMotionState<CrouchState>();
 		}
     }
 
@@ -21,11 +26,12 @@ public partial class OnFootState : BaseGroundedState
 
 		// Calculate horizontal velocity
 		(Vector2 velocityXZ, Vector2 accelerationXZ) = this.CalculateHorizontalOnFootPhysics(delta);
-		this.Character.AccelerateXZ(velocityXZ, accelerationXZ);
 
 		// Calculate vertical velocity
 		(float velocityY, float accelerationY) = this.CalculateVerticalOnFootPhysics();
-		this.Character.AccelerateY(velocityY, accelerationY);
+
+		// Apply acceleration
+		this.Character.Accelerate(velocityXZ, velocityY, accelerationXZ, accelerationY);
 
 		// Updates facing direction
 		this.Character.Rotation = this.CalculateRotationEuler();

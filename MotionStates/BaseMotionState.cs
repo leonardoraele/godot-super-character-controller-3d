@@ -56,33 +56,53 @@ public abstract partial class BaseMotionState : Node
 	/// </summary>
 	public virtual void OnPhysicsProcessState(float delta) {}
 
-	private (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalPhysics(
+	private (Vector2 targetVelocityXZ, Vector2 accelerationXZ) CalculateHorizontalPhysics(
 		float delta,
 		float maxSpeedUnPSec,
-		float accelerationUnPSecSq
+		float accelerationUnPSecSq,
+		float normalDecelerationUnPSecSq,
+		float breakDecelerationUnPSecSq
 	) {
-		Vector2 velocityXZ = maxSpeedUnPSec * this.Character.InputController.MovementInput.Normalized()
+		Vector2 GetXZ(Vector3 v) => new Vector2(v.X, v.Z);
+		Vector2 targetVelocityXZ = maxSpeedUnPSec * this.Character.InputController.MovementInput
 			.Rotated(this.CalculateCameraRotationAngleDg());
-		return (velocityXZ, Vector2.One * accelerationUnPSecSq * delta);
+		float angleDiffToTargetVelocity = targetVelocityXZ.Length() > 0.01f
+			? targetVelocityXZ.AngleTo(GetXZ(this.Character.Velocity))
+			: 0;
+		float breakFactor = (float) (Math.Abs(angleDiffToTargetVelocity) / Math.PI);
+		Vector2 accelerationXZ = targetVelocityXZ.Length() < 0.01f
+			? GetXZ((this.Character.Velocity * -1).Normalized().Abs()) * normalDecelerationUnPSecSq
+			: Vector2.One * (
+					(targetVelocityXZ.Length() > this.Character.Velocity.Length() ? accelerationUnPSecSq : normalDecelerationUnPSecSq)
+					* (1 - breakFactor)
+					+ breakDecelerationUnPSecSq
+					* breakFactor
+			);
+		return (targetVelocityXZ, accelerationXZ * delta);
 	}
 
-	protected virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnFootPhysics(float delta)
+	protected virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnFootPhysics(float delta, MovementSettings? settings = null)
 	{
+		settings ??= this.Character.Settings.Movement;
 		return this.CalculateHorizontalPhysics(
 			delta,
-			this.Character.Settings.Movement.MaxSpeedUnPSec,
-			this.Character.Settings.Movement.AccelerationUnPSecSq
+			settings.MaxSpeedUnPSec,
+			settings.AccelerationUnPSecSq,
+			settings.NormalDecelerationUnPSecSq,
+			settings.BreakDecelerationUnPSecSq
 		);
 	}
 
-	protected virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnAirPhysics(float delta)
+	protected virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnAirPhysics(float delta, MovementSettings? movementSettings = null, JumpSettings? jumpSettings = null)
 	{
+		movementSettings ??= this.Character.Settings.Movement;
+		jumpSettings ??= this.Character.Settings.Jump;
 		return this.CalculateHorizontalPhysics(
 			delta,
-			/*this.Character.Settings.Jump.AirControlSettings?.AerialHorizontalMaxSpeedPxPSec
-				??*/ this.Character.Settings.Movement.MaxSpeedUnPSec,
-			/*this.Character.Settings.Jump.AirControlSettings?.AerialHorizontalAccelerationPxPSecSq
-				??*/ this.Character.Settings.Movement.AccelerationUnPSecSq
+			movementSettings.MaxSpeedUnPSec,
+			movementSettings.AccelerationUnPSecSq * jumpSettings.AerialAccelerationMultiplier,
+			movementSettings.NormalDecelerationUnPSecSq,
+			movementSettings.BreakDecelerationUnPSecSq
 		);
 	}
 
@@ -91,16 +111,16 @@ public abstract partial class BaseMotionState : Node
 		if (!this.Character.IsOnFloor()) {
 			this.Character.ApplyFloorSnap();
 		}
-		return (
-			/*this.Character.Settings.Movement.DownwardVelocityOnFloor * -1*/ 0,
-			float.PositiveInfinity
-		);
+		// Apply a small downward velocity to trigger collision with the floor so that this.Character.IsOnFloor() will
+		// remain true while the character is on the floor
+		return (-1, float.PositiveInfinity);
 	}
 
-	protected virtual (float velocityY, float accelerationY) CalculateVerticalOnAirPhysics(float delta)
+	protected virtual (float velocityY, float accelerationY) CalculateVerticalOnAirPhysics(float delta, JumpSettings? jumpSettings = null)
 	{
-		float velocityY = this.Character.Settings.Jump.MaxFallSpeedUnPSec * -1;
-		float accelerationY = this.Character.Settings.Jump.FallAccelerationUnPSecSq * delta;
+		jumpSettings ??= this.Character.Settings.Jump;
+		float velocityY = jumpSettings.Gravity.MaxFallSpeedUnPSec * -1;
+		float accelerationY = jumpSettings.Gravity.FallAccelerationUnPSecSq * delta;
 		return (velocityY, accelerationY);
 	}
 
@@ -109,7 +129,7 @@ public abstract partial class BaseMotionState : Node
 	}
 
 	/// <summary>
-	/// Calculates target rotation angle of the character based on the user input.
+	/// Calculates ideal rotation angle of the character based on the user input and camera rotation.
 	/// </summary>
 	protected virtual float CalculateRotationAngleDg()
 	{

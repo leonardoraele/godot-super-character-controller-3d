@@ -7,6 +7,8 @@ public class InputController
 {
 	public class InputBuffer {
 		public ulong LastInputTime { get; private set; } = 0;
+		// TODO // FIXME If this.InputBufferDurationMs() is 0, we will never get input. Also, if the game lags beyond
+		// this.InputBufferDurationMs() time, we will lose input.
 		public bool IsInputBuffered => this.LastInputTime >= Time.GetTicksMsec() - this.InputBufferDurationMs();
 		// The respon why we get these variables as functions instead of plain values is so that we can always get the
 		// most updated value, since they might change at runtime if the user tweaks with the inspector variables.

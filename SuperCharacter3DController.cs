@@ -7,7 +7,6 @@ namespace Raele.SuperCharacter3D;
 
 // TODO Make presets for:
 // P1:
-// - Prince of Persia Sands of Time
 // - Super Mario 64
 // - Crash Bandicoot 4
 // - Minecraft
@@ -26,6 +25,10 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	// -----------------------------------------------------------------------------------------------------------------
 
 	[Export] public SuperCharacter3DSettings Settings { get; private set; } = null!; // Initialized on _Ready
+	[ExportGroup("Collision Nodes")]
+	[Export] public CollisionShape3D? StandUpShape { get; private set; }
+	[Export] public CollisionShape3D? CrouchShape { get; private set; }
+	[Export] public CollisionShape3D? CrawlShape { get; private set; }
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// SIGNALS
@@ -71,6 +74,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 		this.AddChild(new DeadState() { Name = nameof(DeadState) });
 		this.AddChild(new InteractingState() { Name = nameof(InteractingState) });
 		this.AddChild(new JumpingState() { Name = nameof(JumpingState) });
+		this.AddChild(new CrouchState() { Name = nameof(CrouchState) });
     }
 
 	private void OnNodeEnteredTree(Node node)
