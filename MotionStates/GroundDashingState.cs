@@ -5,21 +5,28 @@ namespace Raele.SuperCharacter3D.MotionStates;
 
 public partial class GroundDashingState : BaseGroundedState
 {
-    public override void OnEnter(TransitionInfo transition)
+	private DashSettings Settings = null!;
+
+    public override void OnEnter(StateTransition transition)
     {
         base.OnEnter(transition);
-		if (this.Character.Settings.Dash == null) {
-			GD.PushError(nameof(GroundDashingState), "Failed to start Dash action. Cause: Dash settings are missing.");
-			transition.Cancel();
-		}
+		this.Settings = (
+			transition.Data.HasValue && transition.Data.Value.AsUInt64() != 0
+				? GeneralUtility.GetResourceOrDefault<DashSettings>(transition.Data.Value.AsUInt64())
+				: this.Character.Settings.Dash
+			)
+			?? throw new Exception("Failed to start Dash action. Cause: Dash settings are missing.");
+		this.Character.Velocity = (this.Character.InputController.MovementInput3DOrNull ?? this.Character.Basis.Z)
+			* (
+				this.Character.Velocity.Length()
+				* this.Settings.InitialVelocityModifier
+				+ this.Settings.InitialVelocityBoostUnPSec
+			);
     }
-    public override void OnExit(BaseMotionState.TransitionInfo transition)
+    public override void OnExit(StateTransition transition)
     {
 		base.OnExit(transition);
-		if (
-			transition.NextState == nameof(FallingState)
-			&& (this.Character.Settings.Dash?.GroundDashIgnoresGravity ?? false)
-		) {
+		if (transition.NextStateName == nameof(FallingState) && (this.Settings?.IgnoreGravity ?? false)) {
 			transition.Cancel();
 		}
     }
@@ -27,13 +34,13 @@ public partial class GroundDashingState : BaseGroundedState
     public override void OnProcessState(float delta)
     {
         base.OnProcessState(delta);
-		if (this.DurationActiveMs > (this.Character.Settings.Dash?.MaxDurationSec ?? 0) * 1000) {
-			this.Character.TransitionMotionState<OnFootState>();
-		} else if (this.Character.Settings.Dash != null && this.Character.Settings.Dash.VariableLength) {
+		if (this.DurationActiveMs > (this.Settings?.MaxDurationSec ?? 0) * 1000) {
+			this.Character.StateMachine.Transition<OnFootState>();
+		} else if (this.Settings != null && this.Settings.VariableLength) {
 			if (!Input.IsActionPressed(this.Character.Settings.Input.DashAction)) {
-				this.Character.TransitionMotionState<OnFootState>();
-			} else if (this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
-				this.Character.TransitionMotionState<JumpingState>();
+				this.Character.StateMachine.Transition<OnFootState>();
+			} else if (this.Character.IsOnFloor() && this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
+				this.Character.StateMachine.Transition<JumpingState>();
 			}
 		}
     }
@@ -41,13 +48,18 @@ public partial class GroundDashingState : BaseGroundedState
 	public override void OnPhysicsProcessState(float delta)
 	{
 		base.OnPhysicsProcessState(delta);
-		Vector2 targetVelocityXZ = this.Character.Settings.Dash!.MaxSpeedUnPSec
-			* Vector2.Up.Rotated(this.Character.Rotation.Y * -1);
-		Vector2 accelerationXZ = Vector2.One * this.Character.Settings.Dash.AccelerationUnPSecSq * delta;
-		(float targetVelocityY, float accelerationY) = this.Character.Settings.Dash!.GroundDashIgnoresGravity
+
+		// Horizontal movement
+		Vector2 targetVelocityXZ = this.Settings.MaxSpeedUnPSec * Vector2.Up.Rotated(this.Character.Rotation.Y * -1);
+		Vector2 accelerationXZ = Vector2.One * this.Settings.AccelerationUnPSecSq * delta;
+
+		// Vertical movement
+		(float targetVelocityY, float accelerationY) = this.Settings.IgnoreGravity
 			&& !this.Character.IsOnFloor()
 			? (0, float.PositiveInfinity)
-			: this.CalculateVerticalOnFootPhysics();
+			: this.Character.CalculateVerticalOnFootPhysics();
+
+		// Apply movement
 		this.Character.Accelerate(targetVelocityXZ, targetVelocityY, accelerationXZ, accelerationY);
 		this.Character.MoveAndSlide();
 	}

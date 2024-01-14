@@ -6,17 +6,17 @@ public abstract partial class BaseAirState : BaseMotionState
     {
         base.OnProcessState(delta);
 		// Transition Air -> Dash
-		if (this.Character.AirDashesPerformedCounter < (this.Character.Settings.Dash?.AirDash?.Uses ?? 0)
+		if (this.Character.AirDashesPerformedCounter < (this.Character.Settings.AirDash?.Uses ?? 0)
 			&& this.Character.InputController.DashInputBuffer.ConsumeInput()
 		) {
-			this.Character.TransitionMotionState<AirDashingState>();
+			this.Character.StateMachine.Transition<AirDashingState>();
 		}
     }
 
 	public override void OnPhysicsProcessState(float delta)
 	{
 		base.OnPhysicsProcessState(delta);
-		this.Character.Rotation = this.CalculateRotationEuler();
+		this.Character.Rotation = this.Character.CalculateRotationEuler();
 	}
 
 	// TODO This is not working property. Supposedly, we should check if the character is about to land every frame and

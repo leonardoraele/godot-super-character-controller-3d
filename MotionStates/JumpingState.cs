@@ -8,10 +8,10 @@ public partial class JumpingState : BaseAirState
     public ulong? TimeHitCeiling;
     private JumpSettings Settings = null!;
 
-    public override void OnEnter(TransitionInfo transition)
+    public override void OnEnter(StateTransition transition)
     {
         base.OnEnter(transition);
-        this.Settings = transition.Data.HasValue
+        this.Settings = transition.Data.HasValue && transition.Data.Value.AsUInt64() != 0
             ? GeneralUtility.GetResource<JumpSettings>(transition.Data.Value.AsUInt64())
             : this.Character.Settings.Jump;
     }
@@ -19,9 +19,8 @@ public partial class JumpingState : BaseAirState
     public override void OnProcessState(float delta)
     {
         base.OnProcessState(delta);
-        // Transition Jump -> Jump Canceled
-        if (this.Settings.VariableJumpHeightEnabled
-            && this.DurationActiveMs >= this.Settings.MinJumpDurationMs
+        // Transition check: Jump -> Jump Canceled
+        if (this.DurationActiveMs >= this.Settings.MinJumpDurationMs
             && !Input.IsActionPressed(this.Character.Settings.Input.JumpAction)
             || this.DurationActiveMs >= this.Settings.JumpDurationMs
             || this.TimeHitCeiling != null
@@ -30,7 +29,7 @@ public partial class JumpingState : BaseAirState
                 || Time.GetTicksMsec() >= this.TimeHitCeiling.Value + this.Character.Settings.CeilingSlideTimeMs
             )
         ) {
-            this.Character.TransitionMotionState<JumpCanceledState>(this.Settings.GetInstanceId());
+            this.Character.StateMachine.Transition<JumpCanceledState>(this.Settings.GetInstanceId());
         }
     }
 
@@ -39,7 +38,7 @@ public partial class JumpingState : BaseAirState
         base.OnPhysicsProcessState(delta);
 
         // Calculate horizontal velocity
-        (Vector2 velocityXZ, Vector2 accelerationXZ) = this.CalculateHorizontalOnAirPhysics(delta, default, this.Settings);
+        (Vector2 velocityXZ, Vector2 accelerationXZ) = this.Character.CalculateHorizontalOnAirPhysics(delta, default, this.Settings);
         this.Character.AccelerateXZ(velocityXZ, accelerationXZ);
 
         // Calculate vertical velocity

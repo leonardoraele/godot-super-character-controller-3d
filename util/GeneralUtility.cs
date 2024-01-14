@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Godot;
 
 namespace Raele.SuperCharacter3D;
@@ -14,11 +15,37 @@ public static class GeneralUtility {
 		}
 		return resourceT;
 	}
-	public static T? GetResourceOrDefault<T>(ulong resourceId, T? defaultValue) where T : Resource {
+	public static bool GetResource<T>(ulong resourceId, [NotNullWhen(true)] out T? resource) where T : Resource {
 		try {
-			return GetResource<T>(resourceId);
+			resource = GetResource<T>(resourceId);
+			return true;
 		} catch (Exception) {
-			return defaultValue;
+			resource = null;
+			return false;
 		}
+	}
+	public static T? GetResourceOrDefault<T>(ulong resourceId, T? defaultValue = default) where T : Resource {
+		GetResource(resourceId, out T? resource);
+		return resource ?? defaultValue;
+	}
+
+	public static bool FindChild(Node parent, [NotNullWhen(true)] out Node? node, Func<Node, bool> iteratee) {
+		foreach(Node child in parent.GetChildren()) {
+			if (iteratee(child)) {
+				node = child;
+				return true;
+			}
+		}
+		node = null;
+		return false;
+	}
+
+	public static bool FindChildByType<T>(Node parent, [NotNullWhen(true)] out T? nodeT) where T : Node {
+		if (FindChild(parent, out Node? node, child => child != null && child.GetType() == typeof(T)) && node is T _nodeT) {
+			nodeT = _nodeT;
+			return true;
+		}
+		nodeT = null;
+		return false;
 	}
 }

@@ -33,6 +33,15 @@ public class InputController
 	}
 
 	public Vector2 MovementInput { get; private set; }
+	public bool HasMovementInput => this.MovementInput.Length() >= 0.01f;
+	public Vector2? MovementInputOrNull => this.HasMovementInput
+		? this.MovementInput
+		: null;
+	public Vector3 MovementInput3D => new Vector3(this.MovementInput.X, 0, this.MovementInput.Y);
+	public Vector3? MovementInput3DOrNull => this.HasMovementInput
+		? this.MovementInput3D
+		: null;
+
 	public InputBuffer JumpInputBuffer { get; private set; }
 	public InputBuffer DashInputBuffer { get; private set; }
 

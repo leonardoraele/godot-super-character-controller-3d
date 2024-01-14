@@ -12,11 +12,11 @@ public partial class OnWallState : BaseMotionState
         ? Math.Sign(this.Character.InputController.MovementInput.X) == this.WallDirection * -1
         : Math.Sign(this.Character.InputController.MovementInput.X) != this.WallDirection;
 
-    public override void OnEnter(BaseMotionState.TransitionInfo transition)
+    public override void OnEnter(StateTransition transition)
     {
         base.OnEnter(transition);
         if (!this.Character.IsOnWall()) {
-			this.Character.TransitionMotionState<FallingState>();
+			this.Character.StateMachine.Transition<FallingState>();
         }
         this.WallDirection = Math.Sign(this.Character.GetWallNormal().X) * -1;
     }
@@ -26,7 +26,7 @@ public partial class OnWallState : BaseMotionState
 
         // If no longer on wall, drop off
         if (this.Character.Settings.Climb == null || !this.Character.IsOnWall()) {
-			this.Character.TransitionMotionState<FallingState>();
+			this.Character.StateMachine.Transition<FallingState>();
             return;
 		}
 
@@ -37,7 +37,7 @@ public partial class OnWallState : BaseMotionState
             } else if (this.Character.Settings.WallDropPreventionLeniencyMs <= 0
                 || Time.GetTicksMsec() > this.WallDropInputTimeMs + this.Character.Settings.WallDropPreventionLeniencyMs
             ) {
-                this.Character.TransitionMotionState<FallingState>();
+                this.Character.StateMachine.Transition<FallingState>();
                 return;
             }
         } else {
@@ -47,7 +47,7 @@ public partial class OnWallState : BaseMotionState
         // If player input is to jump, jump off the wall with a starting kickoff speed
         if (this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
             this.Character.Velocity = this.Character.Basis.Z * this.Character.Settings.Climb.JumpKickoffSpeedUnPSec;
-            this.Character.TransitionMotionState<JumpingState>();
+            this.Character.StateMachine.Transition<JumpingState>();
             return;
         }
     }

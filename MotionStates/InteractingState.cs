@@ -11,7 +11,7 @@ public partial class InteractingState : BaseMotionState
 	public bool Ended { get; private set; } = false;
 	private bool IsDue => this.DurationActiveMs >= this.DurationSec * 1000;
 
-    public override void OnEnter(TransitionInfo transition)
+    public override void OnEnter(StateTransition transition)
     {
         base.OnEnter(transition);
         Dictionary<string, Variant>? dict = transition.Data?.AsGodotDictionary<string, Variant>();
@@ -31,8 +31,8 @@ public partial class InteractingState : BaseMotionState
 			if (this.OnFinished != null) {
 				this.OnFinished.Value.Call();
 			}
-			if (this.Character.State == this && this.Ended) {
-				this.Character.ResetState();
+			if (this.Character.StateMachine.CurrentState == this && this.Ended) {
+				this.Character.StateMachine.Reset();
 			}
 		}
 	}

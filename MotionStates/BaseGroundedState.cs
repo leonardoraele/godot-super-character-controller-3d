@@ -6,7 +6,7 @@ public abstract partial class BaseGroundedState : BaseMotionState
     {
         base.OnProcessState(delta);
         if (!this.Character.IsOnFloor()) {
-            this.Character.TransitionMotionState<FallingState>();
+            this.Character.StateMachine.Transition<FallingState>();
         }
     }
 }

@@ -8,9 +8,9 @@ public partial class WallClimbingState : OnWallState
 		if (this.Character.Settings.Climb == null
 			|| this.DurationActiveMs > this.Character.Settings.Climb.WallMaxDurationSec * 1000
 		) {
-			this.Character.TransitionMotionState<WallSlidingState>();
+			this.Character.StateMachine.Transition<WallSlidingState>();
 		} else if (this.Character.IsOnFloor() && this.Character.Settings.Climb.AutomaticDropOffOnFloor) {
-			this.Character.TransitionMotionState<OnFootState>();
+			this.Character.StateMachine.Transition<OnFootState>();
 		}
     }
 

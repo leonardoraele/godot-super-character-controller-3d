@@ -10,6 +10,7 @@ public partial class SuperCharacter3DSettings : Resource
 	[Export] public JumpSettings Jump = new JumpSettings();
 	[Export] public CrouchSettings? Crouch;
 	[Export] public DashSettings? Dash;
+	[Export] public AirDashSettings? AirDash;
 	[Export] public ClimbSettings? Climb;
 
 	[ExportGroup("Assist Options")]

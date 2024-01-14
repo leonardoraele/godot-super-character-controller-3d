@@ -29,6 +29,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	[Export] public CollisionShape3D? StandUpShape { get; private set; }
 	[Export] public CollisionShape3D? CrouchShape { get; private set; }
 	[Export] public CollisionShape3D? CrawlShape { get; private set; }
+	[Export] public CollisionShape3D? SlideShape { get; private set; }
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// SIGNALS
@@ -40,11 +41,10 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	// FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	public BaseMotionState? State { get; private set; } = null;
+	public MotionStateMachine StateMachine { get; private set; } = null!;
 	public int AirDashesPerformedCounter = 0;
 	public InputController InputController { get; private set; } = null!; // Initialized on _Ready
     public Vector3 LastOnFloorPosition { get; private set; }
-	public Dictionary<string, BaseMotionState> StateDict = new Dictionary<string, BaseMotionState>();
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -56,132 +56,144 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 		this.Settings ??= new SuperCharacter3DSettings();
 		this.InputController = new InputController(this);
 		this.SetupCharacterBody3D();
-		RegisterBuiltinMotionStates();
-		ResetState();
+		this.SetupChildNodes();
     }
 
-    private void RegisterBuiltinMotionStates()
-    {
-		this.ChildEnteredTree += this.OnNodeEnteredTree;
-		this.ChildExitingTree += this.OnNodeExitingTree;
-        this.AddChild(new OnFootState() { Name = nameof(OnFootState) });
-		this.AddChild(new FallingState() { Name = nameof(FallingState) });
-		this.AddChild(new WallClimbingState() { Name = nameof(WallClimbingState) });
-		this.AddChild(new WallSlidingState() { Name = nameof(WallSlidingState) });
-		this.AddChild(new JumpCanceledState() { Name = nameof(JumpCanceledState) });
-		this.AddChild(new GroundDashingState() { Name = nameof(GroundDashingState) });
-		this.AddChild(new AirDashingState() { Name = nameof(AirDashingState) });
-		this.AddChild(new DeadState() { Name = nameof(DeadState) });
-		this.AddChild(new InteractingState() { Name = nameof(InteractingState) });
-		this.AddChild(new JumpingState() { Name = nameof(JumpingState) });
-		this.AddChild(new CrouchState() { Name = nameof(CrouchState) });
-    }
-
-	private void OnNodeEnteredTree(Node node)
+	private void SetupChildNodes()
 	{
-		if (node is BaseMotionState state) {
-			this.StateDict[state.Name] = state;
-		}
-	}
-
-	private void OnNodeExitingTree(Node node)
-	{
-		if (node is BaseMotionState state) {
-			this.StateDict.Remove(state.Name);
-		}
+		if (!GeneralUtility.FindChildByType(this, out MotionStateMachine? stateMachine)) {
+            stateMachine = new MotionStateMachine {
+                Owner = this.Owner
+            };
+                // this.AddChild(stateMachine);
+        }
+		this.StateMachine = stateMachine;
 	}
 
     private void SetupCharacterBody3D()
 	{
-		// Any change that is made to the CharacterBody2D should be properly logged to the user.
+		// Any change that is made to the CharacterBody3D should be properly logged to the user.
 		if (this.MotionMode != MotionModeEnum.Grounded) {
-			GD.PushWarning(nameof(SuperCharacter3DController), "expects CharacterBody2D to be in Grounded mode. Setting it now.");
 			this.MotionMode = MotionModeEnum.Grounded;
+			GD.PushWarning("Changed ", nameof(CharacterBody3D), ".", nameof(CharacterBody3D.MotionMode) ," to Grounded mode.");
 		}
 	}
 
     public override void _Process(double delta)
     {
+		if (Engine.IsEditorHint()) {
+			return;
+		}
         base._Process(delta);
 		this.InputController.Update();
 		this.UpdateLastOnFloorPosition();
-		this.State?.OnProcessState((float) delta);
     }
-
-	private void UpdateLastOnFloorPosition()
-	{
-		if (this.IsOnFloor() && this.Position.DistanceSquaredTo(this.LastOnFloorPosition) > 1) {
-			this.LastOnFloorPosition = this.Position;
-		}
-	}
 
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
-		this.State?.OnPhysicsProcessState((float) delta);
+		if (Engine.IsEditorHint()) {
+			return;
+		}
     }
 
-    public void TransitionMotionState<T>(Variant? data = null) where T : BaseMotionState
-    {
-		this.TransitionMotionState(typeof(T).Name, data);
-    }
-
-	public void TransitionMotionState(string nextStateName, Variant? data = null)
+    private void UpdateLastOnFloorPosition()
 	{
-		if (!this.StateDict.TryGetValue(nextStateName, out BaseMotionState? nextState)) {
-			throw new Exception($"Failed to transition to motion state \"{nextStateName}\". Cause: State not found. Did you forget to add it as a child node of {nameof(SuperCharacter3DController)}?");
+		if (this.IsOnFloor() && this.Position.DistanceSquaredTo(this.LastOnFloorPosition) >= 1) {
+			this.LastOnFloorPosition = this.Position;
 		}
-		BaseMotionState? previousState = this.State;
-		if (previousState != null) {
-			try {
-				GD.PrintS(nameof(SuperCharacter3DController), "Exiting state:", previousState.Name);
-				previousState.OnExit(new BaseMotionState.TransitionInfo() {
-					PreviousState = previousState.Name,
-					NextState = nextStateName,
-					Cancel = () => nextState = null,
-					Data = data,
-				});
-			} catch (Exception e) {
-				GD.PushError(e);
-			}
+	}
+
+    // -----------------------------------------------------------------------------------------------------------------
+    // PHYSICS UTILITY METHODS
+    // -----------------------------------------------------------------------------------------------------------------
+
+	private (Vector2 targetVelocityXZ, Vector2 accelerationXZ) CalculateHorizontalPhysics(
+		float delta,
+		float maxSpeedUnPSec,
+		float accelerationUnPSecSq,
+		float normalDecelerationUnPSecSq,
+		float breakDecelerationUnPSecSq
+	) {
+		Vector2 GetXZ(Vector3 v) => new Vector2(v.X, v.Z);
+		Vector2 targetVelocityXZ = maxSpeedUnPSec * this.InputController.MovementInput
+			.Rotated(this.CalculateCameraRotationAngleDg());
+		float angleDiffToTargetVelocity = targetVelocityXZ.Length() > 0.01f
+			? targetVelocityXZ.AngleTo(GetXZ(this.Velocity))
+			: 0;
+		float breakFactor = (float) (Math.Abs(angleDiffToTargetVelocity) / Math.PI);
+		Vector2 accelerationXZ = targetVelocityXZ.Length() < 0.01f
+			? GetXZ((this.Velocity * -1).Normalized().Abs()) * normalDecelerationUnPSecSq
+			: Vector2.One * (
+					(targetVelocityXZ.Length() > this.Velocity.Length() ? accelerationUnPSecSq : normalDecelerationUnPSecSq)
+					* (1 - breakFactor)
+					+ breakDecelerationUnPSecSq
+					* breakFactor
+			);
+		return (targetVelocityXZ, accelerationXZ * delta);
+	}
+
+	public virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnFootPhysics(float delta, MovementSettings? settings = null)
+	{
+		settings ??= this.Settings.Movement;
+		return this.CalculateHorizontalPhysics(
+			delta,
+			settings.MaxSpeedUnPSec,
+			settings.AccelerationUnPSecSq,
+			settings.NormalDecelerationUnPSecSq,
+			settings.BreakDecelerationUnPSecSq
+		);
+	}
+
+	public virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnAirPhysics(float delta, MovementSettings? movementSettings = null, JumpSettings? jumpSettings = null)
+	{
+		movementSettings ??= this.Settings.Movement;
+		jumpSettings ??= this.Settings.Jump;
+		return this.CalculateHorizontalPhysics(
+			delta,
+			movementSettings.MaxSpeedUnPSec,
+			movementSettings.AccelerationUnPSecSq * jumpSettings.AerialAccelerationMultiplier,
+			movementSettings.NormalDecelerationUnPSecSq,
+			movementSettings.BreakDecelerationUnPSecSq
+		);
+	}
+
+	public virtual (float velocityY, float accelerationY) CalculateVerticalOnFootPhysics()
+	{
+		if (!this.IsOnFloor()) {
+			this.ApplyFloorSnap();
 		}
-		if (nextState == null || this.State != previousState) {
-			return;
-		}
-		try {
-			GD.PrintS(nameof(SuperCharacter3DController), "Entering state:", nextState.Name);
-			nextState.OnEnter(new BaseMotionState.TransitionInfo() {
-				PreviousState = this.State?.Name,
-				NextState = nextState.Name,
-				Cancel = () => nextState = null,
-				Data = data,
-			});
-		} catch(Exception e) {
-			GD.PushError(e);
-			this.State = null;
-			this.ResetState();
-			return;
-		}
-		if (nextState == null || this.State != previousState) {
-			return;
-		}
-		this.State = nextState;
-		this.EmitSignal(SignalName.MotionStateChanged, this.State, previousState!);
+		// Apply a small downward velocity to trigger collision with the floor so that this.IsOnFloor() will
+		// remain true while the character is on the floor
+		return (0, float.PositiveInfinity);
+	}
+
+	public virtual (float velocityY, float accelerationY) CalculateVerticalOnAirPhysics(float delta, JumpSettings? jumpSettings = null)
+	{
+		jumpSettings ??= this.Settings.Jump;
+		float velocityY = jumpSettings.Gravity.MaxFallSpeedUnPSec * -1;
+		float accelerationY = jumpSettings.Gravity.FallAccelerationUnPSecSq * delta;
+		return (velocityY, accelerationY);
+	}
+
+	public virtual float CalculateCameraRotationAngleDg() {
+		return this.GetViewport().GetCamera3D().Rotation.Y * -1;
 	}
 
 	/// <summary>
-	/// Changes the character to a neutral state. The state machine will automatically transition to the correct state.
+	/// Calculates ideal rotation angle of the character based on the user input and camera rotation.
 	/// </summary>
-	public void ResetState()
+	public virtual float CalculateRotationAngleDg()
 	{
-		if (this.IsOnFloor())
-		{
-			this.TransitionMotionState<OnFootState>();
-		}
-		else
-		{
-			this.TransitionMotionState<FallingState>();
-		}
+		return this.InputController.MovementInput.Length() > 0.01f
+			? this.InputController.MovementInput.Rotated(this.CalculateCameraRotationAngleDg())
+				.AngleTo(Vector2.Up)
+			: this.Rotation.Y;
+	}
+
+	public Vector3 CalculateRotationEuler()
+	{
+		return Vector3.Up * this.CalculateRotationAngleDg();
 	}
 
     public void Accelerate(Vector3 targetVelocity, Vector3 acceleration)
@@ -296,9 +308,6 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 
 	public static float ApplyAcceleration(float currentVelocity, float targetVelocity, float acceleration)
 	{
-		if (acceleration < 0) {
-			GD.PushWarning("Accelerating character with a negative value. This means the character will never reach the target velocity and will likely move in the wrong direction. Acceleration must be positive. Got: " + acceleration);
-		}
 		return Mathf.MoveToward(currentVelocity, targetVelocity, acceleration);
 	}
 }

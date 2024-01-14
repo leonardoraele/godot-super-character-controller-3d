@@ -11,14 +11,25 @@ public partial class JumpSettings : Resource
 	[Export] public GravitySettings Gravity { get; private set; } = new GravitySettings();
 
 	[ExportGroup("Variable Jump Height")]
-	[Export] public bool VariableJumpHeightEnabled = true;
 	/// <summary>
-	/// Even if the player releases the jump button earlier, the jump will continue until this time has passed. Use this
-	/// setting to make sure that, when the player performs a jump, they will get over at least the lowest platform
-	/// height in your game, even if they jump tap the jump button.
+	/// The minimum duration of a jump, in milliseconds. Jump will only be canceled after this much time have passed,
+	/// even if the player releases the jump button earlier. If the player releases the jump button before this amount
+	/// of time, the jump will continue until this time has passed.
+	///
+	/// Use this setting to make sure that the player can always jump over the lowest platform in your game even when
+	/// they just tap the jump button.
+	///
+	/// Set this setting to a value higher than <see cref="JumpDurationMs"/> (or just set it to 999999) to disable
+	/// variable jump height.
 	/// </summary>
 	[Export] public float MinJumpDurationMs { get; private set; } = 100;
-	[Export(PropertyHint.Range, "1,3,0.05,or_greater")] public float JumpCancelAccelerationMultiplier { get; private set; } = 1;
+	/// <summary>
+	/// If player cancels the jump earlier by releasing the jump button, this modifier will be applied to the gravity
+	/// acceleration for as long as the character is still moving upwards. (carried by the jump's momentum).
+	///
+	/// Set this to a value higher than 1 to make the character start falling faster when the player cancels the jump.
+	/// </summary>
+	[Export(PropertyHint.Range, ".5,3,0.05,or_greater,or_less")] public float JumpCancelAccelerationMultiplier { get; private set; } = 1;
 
 	[ExportGroup("Air Control")]
 	[Export(PropertyHint.Range, "0,2,0.01")] public float AerialAccelerationMultiplier { get; private set; } = 1f;

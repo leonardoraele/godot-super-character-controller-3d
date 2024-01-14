@@ -6,7 +6,7 @@ public partial class WallSlidingState : OnWallState
     {
         base.OnProcessState(delta);
 		if (this.Character.IsOnFloor()) {
-			this.Character.TransitionMotionState<OnFootState>();
+			this.Character.StateMachine.Transition<OnFootState>();
 		}
     }
 
