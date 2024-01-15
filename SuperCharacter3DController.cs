@@ -124,7 +124,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 			return new HorizontalMovement {
 				TargetDirection = GodotUtil.V3ToHV2(this.Velocity).Normalized(),
 				TargetSpeedUnPSec = 0,
-				AccelerationUnPSecSq = settings.TurnDecelerationUnPSecSq
+				AccelerationUnPSecSq = settings._180TurnDecelerationUnPSecSq
 			};
 		} else if (Math.Abs(turnAngleDg - settings.HarshTurnBeginAngleDg) > 0.01f) {
 			float velocityMultiplier = Mathf.Pow(

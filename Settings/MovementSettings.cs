@@ -8,8 +8,12 @@ public partial class MovementSettings : Resource
 	[Export] public float MaxSpeedUnPSec { get; private set; } = 6;
 	[Export] public float AccelerationUnPSecSq { get; private set; } = 20;
 	[Export] public float DecelerationUnPSecSq { get; private set; } = 20;
+	/// <summary>
+	/// Maximum turn angle per second, in degrees.
+	/// </summary>
+	[Export] public float TurnAngleDgPSec = 540;
 
-	[ExportGroup("Turn Deceleration")]
+	[ExportGroup("Velocity Loss On Turn")]
 	/// <summary>
 	/// Turn angle at which the character will start to lose velocity.
 	/// Set to 360 to disable.
@@ -31,9 +35,5 @@ public partial class MovementSettings : Resource
 	/// velocity and this deceleration will be applied until the character comes to a complete halt. Then, they can
 	/// turn.
 	/// </summary>
-	[Export] public float TurnDecelerationUnPSecSq = 20;
-	/// <summary>
-	/// Maximum turn angle per second, in degrees.
-	/// </summary>
-	[Export] public float TurnAngleDgPSec = 540;
+	[Export] public float _180TurnDecelerationUnPSecSq = 40;
 }
