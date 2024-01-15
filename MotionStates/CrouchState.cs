@@ -55,12 +55,13 @@ public partial class CrouchState : BaseGroundedState
     }
     public override void OnPhysicsProcessState(float delta)
     {
-		(Vector2 velocityXZ, Vector2 accelerationXZ) = this.Character.CalculateHorizontalOnFootPhysics(delta);
-        velocityXZ *= this.Character.Settings.Crouch?.VelocityModifier ?? 1;
-        accelerationXZ *= this.Character.Settings.Crouch?.AccelerationyModifier ?? 1;
-        (float velocityY, float accelerationY) = this.Character.CalculateVerticalOnFootPhysics();
-		this.Character.Accelerate(velocityXZ, velocityY, accelerationXZ, accelerationY);
+        base.OnPhysicsProcessState(delta);
+        HorizontalMovement horizontal = this.Character.CalculateOnAirHorizontalMovement();
+        this.Character.ApplyHorizontalMovement(horizontal with {
+            TargetSpeedUnPSec = horizontal.TargetSpeedUnPSec * this.Character.Settings.Crouch?.VelocityModifier ?? 1,
+            AccelerationUnPSecSq = horizontal.AccelerationUnPSecSq * this.Character.Settings.Crouch?.AccelerationyModifier ?? 1,
+        });
+        this.Character.ApplyVerticalMovement(this.Character.CalculateOnFootVerticalMovement());
 		this.Character.MoveAndSlide();
-        this.Character.Rotation = this.Character.CalculateRotationEuler();
     }
 }

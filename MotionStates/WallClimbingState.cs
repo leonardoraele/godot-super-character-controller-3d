@@ -26,7 +26,7 @@ public partial class WallClimbingState : OnWallState
 		float accelerationY = targetVelocityY == 0 ? float.PositiveInfinity
 			: this.Character.Velocity.Y < targetVelocityY ? this.Character.Settings.Climb!.UpwardAccelerationUnPSecSq * delta
 			: this.Character.Settings.Climb!.DownwardAccelerationUnPSecSq * delta;
-		this.Character.Accelerate(0, targetVelocityY, float.PositiveInfinity, accelerationY);
+		// this.Character.Accelerate(0, targetVelocityY, float.PositiveInfinity, accelerationY);
 		this.Character.MoveAndSlide();
     }
 }

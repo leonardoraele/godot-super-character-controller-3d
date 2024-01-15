@@ -10,7 +10,7 @@ public partial class AirDashingState : BaseAirState
     {
         base.OnEnter(transition);
         this.Settings = transition.Data.HasValue && transition.Data.Value.AsUInt64() != 0
-            ? GeneralUtility.GetResource<DashSettings>(transition.Data.Value.AsUInt64())
+            ? GodotUtil.GetResource<DashSettings>(transition.Data.Value.AsUInt64())
             : this.Character.Settings.AirDash?.Dash ?? this.Character.Settings.Dash
             ?? throw new Exception("No dash settings found.");
     }
@@ -37,18 +37,16 @@ public partial class AirDashingState : BaseAirState
     public override void OnPhysicsProcessState(float delta)
     {
         base.OnPhysicsProcessState(delta);
-
-        // Horizontal movement
-        Vector2 targetVelocityXZ = this.Settings.MaxSpeedUnPSec * Vector2.Up.Rotated(this.Character.Rotation.Y * -1);
-        Vector2 accelerationXZ = Vector2.One * this.Settings.AccelerationUnPSecSq * delta;
-
-        // Vertical movement
-        (float targetVelocityY, float accelerationY) = this.Settings.IgnoreGravity == true
-            ? (0, float.PositiveInfinity)
-            : this.Character.CalculateVerticalOnAirPhysics(delta);
-
-        // Apply movement
-        this.Character.Accelerate(targetVelocityXZ, targetVelocityY, accelerationXZ, accelerationY);
+        this.Character.ApplyHorizontalMovement(new() {
+            TargetDirection = GodotUtil.V3ToHV2(this.Character.Basis.Z * -1),
+            TargetSpeedUnPSec = this.Settings.MaxSpeedUnPSec,
+            AccelerationUnPSecSq = this.Settings.AccelerationUnPSecSq,
+        });
+        this.Character.ApplyVerticalMovement(
+            this.Settings.IgnoreGravity
+                ? new() { Speed = 0 }
+                : this.Character.CalculateOnAirVerticalMovement()
+        );
         this.Character.MoveAndSlide();
     }
 }

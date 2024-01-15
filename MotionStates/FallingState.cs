@@ -22,9 +22,8 @@ public partial class FallingState : BaseAirState
     public override void OnPhysicsProcessState(float delta)
     {
         base.OnPhysicsProcessState(delta);
-        (Vector2 velocityXZ, Vector2 accelerationXZ) = this.Character.CalculateHorizontalOnAirPhysics(delta);
-        (float velocityY, float accelerationY) = this.Character.CalculateVerticalOnAirPhysics(delta);
-        this.Character.Accelerate(velocityXZ, velocityY, accelerationXZ, accelerationY);
+        this.Character.ApplyHorizontalMovement(this.Character.CalculateOnAirHorizontalMovement());
+        this.Character.ApplyVerticalMovement(this.Character.CalculateOnAirVerticalMovement());
         this.Character.MoveAndSlide();
     }
 }

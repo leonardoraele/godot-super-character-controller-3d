@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Collections.Generic;
 using Raele.SuperCharacter3D.MotionStates;
 
 namespace Raele.SuperCharacter3D;
@@ -38,13 +37,16 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	[Signal] public delegate void MotionStateChangedEventHandler(BaseMotionState newState, BaseMotionState? oldState);
 
 	// -----------------------------------------------------------------------------------------------------------------
-	// FIELDS
+	// FIELDS & PROPERTIES
 	// -----------------------------------------------------------------------------------------------------------------
 
 	public MotionStateMachine StateMachine { get; private set; } = null!;
 	public int AirDashesPerformedCounter = 0;
-	public InputController InputController { get; private set; } = null!; // Initialized on _Ready
+    private float PhysicsDelta = 1 / 60f;
+    public InputController InputController { get; private set; } = null!; // Initialized on _Ready
     public Vector3 LastOnFloorPosition { get; private set; }
+
+	public Vector3 Forward => this.Basis.Z * -1;
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -61,7 +63,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 
 	private void SetupChildNodes()
 	{
-		if (!GeneralUtility.FindChildByType(this, out MotionStateMachine? stateMachine)) {
+		if (!GodotUtil.FindChildByType(this, out MotionStateMachine? stateMachine)) {
             stateMachine = new MotionStateMachine {
                 Owner = this.Owner
             };
@@ -92,6 +94,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     public override void _PhysicsProcess(double delta)
     {
         base._PhysicsProcess(delta);
+		this.PhysicsDelta = (float) delta;
 		if (Engine.IsEditorHint()) {
 			return;
 		}
@@ -108,206 +111,104 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     // PHYSICS UTILITY METHODS
     // -----------------------------------------------------------------------------------------------------------------
 
-	private (Vector2 targetVelocityXZ, Vector2 accelerationXZ) CalculateHorizontalPhysics(
-		float delta,
-		float maxSpeedUnPSec,
-		float accelerationUnPSecSq,
-		float normalDecelerationUnPSecSq,
-		float breakDecelerationUnPSecSq
-	) {
-		Vector2 GetXZ(Vector3 v) => new Vector2(v.X, v.Z);
-		Vector2 targetVelocityXZ = maxSpeedUnPSec * this.InputController.MovementInput
-			.Rotated(this.CalculateCameraRotationAngleDg());
-		float angleDiffToTargetVelocity = targetVelocityXZ.Length() > 0.01f
-			? targetVelocityXZ.AngleTo(GetXZ(this.Velocity))
-			: 0;
-		float breakFactor = (float) (Math.Abs(angleDiffToTargetVelocity) / Math.PI);
-		Vector2 accelerationXZ = targetVelocityXZ.Length() < 0.01f
-			? GetXZ((this.Velocity * -1).Normalized().Abs()) * normalDecelerationUnPSecSq
-			: Vector2.One * (
-					(targetVelocityXZ.Length() > this.Velocity.Length() ? accelerationUnPSecSq : normalDecelerationUnPSecSq)
-					* (1 - breakFactor)
-					+ breakDecelerationUnPSecSq
-					* breakFactor
-			);
-		return (targetVelocityXZ, accelerationXZ * delta);
-	}
-
-	public virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnFootPhysics(float delta, MovementSettings? settings = null)
-	{
+	private HorizontalMovement CalculateHorizontalMovement(MovementSettings? settings = null) {
 		settings ??= this.Settings.Movement;
-		return this.CalculateHorizontalPhysics(
-			delta,
-			settings.MaxSpeedUnPSec,
-			settings.AccelerationUnPSecSq,
-			settings.NormalDecelerationUnPSecSq,
-			settings.BreakDecelerationUnPSecSq
-		);
+		Vector2 inputDirection = this.InputController.MovementInput
+			.Rotated(this.GetViewport().GetCamera3D().Rotation.Y * -1);
+		float currentSpeedUnPSec = GodotUtil.V3ToHV2(this.Velocity).Length();
+		float targetSpeedUnPSec = inputDirection.Length() * settings.MaxSpeedUnPSec;
+		float turnAngleDg = targetSpeedUnPSec > 0.01f && currentSpeedUnPSec > 0.01f
+			? Math.Abs(Mathf.RadToDeg(GodotUtil.V3ToHV2(this.Velocity).AngleTo(inputDirection)))
+			: 0;
+		if (turnAngleDg > settings.HarshTurnMaxAngleDg) {
+			return new HorizontalMovement {
+				TargetDirection = GodotUtil.V3ToHV2(this.Velocity).Normalized(),
+				TargetSpeedUnPSec = 0,
+				AccelerationUnPSecSq = settings.TurnDecelerationUnPSecSq
+			};
+		} else if (Math.Abs(turnAngleDg - settings.HarshTurnBeginAngleDg) > 0.01f) {
+			float velocityMultiplier = Mathf.Pow(
+				1 - (turnAngleDg - settings.HarshTurnBeginAngleDg) / (settings.HarshTurnMaxAngleDg - settings.HarshTurnBeginAngleDg),
+				settings.HarshTurnVelocityLossFactor
+			);
+			return new HorizontalMovement {
+				TargetDirection = inputDirection,
+				RotationalSpeedDgPSec = settings.TurnAngleDgPSec,
+				TargetSpeedUnPSec = currentSpeedUnPSec * velocityMultiplier,
+				AccelerationUnPSecSq = float.PositiveInfinity
+			};
+		}
+		float accelerationUnPSecSq = targetSpeedUnPSec > currentSpeedUnPSec
+			? settings.AccelerationUnPSecSq
+			: settings.DecelerationUnPSecSq;
+		return new HorizontalMovement {
+			TargetDirection = inputDirection,
+			RotationalSpeedDgPSec = settings.TurnAngleDgPSec,
+			TargetSpeedUnPSec = targetSpeedUnPSec,
+			AccelerationUnPSecSq = accelerationUnPSecSq
+		};
 	}
 
-	public virtual (Vector2 velocityXZ, Vector2 accelerationXZ) CalculateHorizontalOnAirPhysics(float delta, MovementSettings? movementSettings = null, JumpSettings? jumpSettings = null)
+	public virtual HorizontalMovement CalculateOnFootHorizontalMovement(MovementSettings? settings = null)
 	{
-		movementSettings ??= this.Settings.Movement;
+		return this.CalculateHorizontalMovement(settings);
+	}
+
+	public virtual HorizontalMovement CalculateOnAirHorizontalMovement(
+		MovementSettings? movementSettings = null,
+		JumpSettings? jumpSettings = null
+	) {
 		jumpSettings ??= this.Settings.Jump;
-		return this.CalculateHorizontalPhysics(
-			delta,
-			movementSettings.MaxSpeedUnPSec,
-			movementSettings.AccelerationUnPSecSq * jumpSettings.AerialAccelerationMultiplier,
-			movementSettings.NormalDecelerationUnPSecSq,
-			movementSettings.BreakDecelerationUnPSecSq
-		);
+        HorizontalMovement horizontalMovement = this.CalculateOnFootHorizontalMovement(movementSettings);
+		return horizontalMovement with {
+			AccelerationUnPSecSq = horizontalMovement.AccelerationUnPSecSq * jumpSettings.AerialAccelerationMultiplier
+		};
 	}
 
-	public virtual (float velocityY, float accelerationY) CalculateVerticalOnFootPhysics()
+	public virtual VerticalMovement CalculateOnFootVerticalMovement()
 	{
-		if (!this.IsOnFloor()) {
+		return new VerticalMovement { Speed = 0, Acceleration = float.PositiveInfinity, SnapToFloor = true };
+	}
+
+	public virtual VerticalMovement CalculateOnAirVerticalMovement(JumpSettings? settings = null)
+	{
+		settings ??= this.Settings.Jump;
+		return new VerticalMovement {
+			Speed = settings.Gravity.MaxFallSpeedUnPSec * -1,
+			Acceleration = settings.Gravity.FallAccelerationUnPSecSq,
+		};
+	}
+
+	public void ApplyHorizontalMovement(HorizontalMovement movement)
+	{
+		// Vector2.AngleTo -> clockwise is positive (returns positive if the given vector is in clockwise direction to this vector)
+		float turnAngleRad = movement.TargetSpeedUnPSec > 0.01f && this.Velocity.Length() > 0.01f
+			? GodotUtil.V3ToHV2(this.Velocity).AngleTo(movement.TargetDirection) * -1
+			: 0;
+		float RotationalSpeedRadPSec = Mathf.DegToRad(movement.RotationalSpeedDgPSec);
+		Vector3 newDirection = Math.Abs(turnAngleRad) < 0.001f
+			? movement.TargetDirection.Length() > 0.01f
+				? GodotUtil.HV2ToV3(movement.TargetDirection)
+				: this.Basis.Z * -1
+			: (this.Basis.Z * -1).Rotated(
+				Vector3.Up,
+				RotationalSpeedRadPSec * this.PhysicsDelta > Math.Abs(turnAngleRad)
+					? turnAngleRad
+					: RotationalSpeedRadPSec * this.PhysicsDelta * Math.Sign(turnAngleRad)
+			);
+		this.Rotation = Vector3.Up * GodotUtil.V3ToHV2(newDirection).AngleTo(Vector2.Up);
+		float currentHorizontalSpeed = new Vector2(this.Velocity.X, this.Velocity.Z).Length();
+		float newHorizontalSpeed = Mathf.MoveToward(currentHorizontalSpeed, movement.TargetSpeedUnPSec, movement.AccelerationUnPSecSq * this.PhysicsDelta);
+		this.Velocity = newDirection * newHorizontalSpeed + Vector3.Up * this.Velocity.Y;
+	}
+
+	public void ApplyVerticalMovement(VerticalMovement movement)
+	{
+		if (movement.SnapToFloor) {
 			this.ApplyFloorSnap();
 		}
-		// Apply a small downward velocity to trigger collision with the floor so that this.IsOnFloor() will
-		// remain true while the character is on the floor
-		return (0, float.PositiveInfinity);
-	}
-
-	public virtual (float velocityY, float accelerationY) CalculateVerticalOnAirPhysics(float delta, JumpSettings? jumpSettings = null)
-	{
-		jumpSettings ??= this.Settings.Jump;
-		float velocityY = jumpSettings.Gravity.MaxFallSpeedUnPSec * -1;
-		float accelerationY = jumpSettings.Gravity.FallAccelerationUnPSecSq * delta;
-		return (velocityY, accelerationY);
-	}
-
-	public virtual float CalculateCameraRotationAngleDg() {
-		return this.GetViewport().GetCamera3D().Rotation.Y * -1;
-	}
-
-	/// <summary>
-	/// Calculates ideal rotation angle of the character based on the user input and camera rotation.
-	/// </summary>
-	public virtual float CalculateRotationAngleDg()
-	{
-		return this.InputController.MovementInput.Length() > 0.01f
-			? this.InputController.MovementInput.Rotated(this.CalculateCameraRotationAngleDg())
-				.AngleTo(Vector2.Up)
-			: this.Rotation.Y;
-	}
-
-	public Vector3 CalculateRotationEuler()
-	{
-		return Vector3.Up * this.CalculateRotationAngleDg();
-	}
-
-    public void Accelerate(Vector3 targetVelocity, Vector3 acceleration)
-    {
-		this.Velocity = SuperCharacter3DController.ApplyAcceleration(this.Velocity, targetVelocity, acceleration);
-    }
-
-    public void Accelerate(Vector2 targetVelocityXZ, float targetVelocityY, Vector2 accelerationXZ, float accelerationY)
-	{
-		this.Velocity = SuperCharacter3DController.ApplyAcceleration(
-			this.Velocity.X,
-			this.Velocity.Y,
-			this.Velocity.Z,
-			targetVelocityXZ.X,
-			targetVelocityY,
-			targetVelocityXZ.Y,
-			accelerationXZ.X,
-			accelerationY,
-			accelerationXZ.Y
-		);
-    }
-
-	/// <summary>
-	/// Accelerates the character toward the given target velocity. The acceleration is applied to each axis.
-	/// If the character is already moving faster than the target velocity, the acceleration is applied in the opposite
-	/// direction to slow down the character.
-	/// If the character is already moving at the target velocity, no acceleration is applied.
-	///
-	/// Params <code>accelerationX</code> and <code>accelerationY</code> must be positive. If they are negative, the
-	/// character will accelerate away from the target velocity.
-	///
-	/// This method only changes the character's Velocity. You still have to call <code>MoveAndSlide</code> or similar
-	/// to actually move the character.
-	/// </summary>
-    public void Accelerate(
-		float targetVelocityX,
-		float targetVelocityY,
-		float targetVelocityZ,
-		float accelerationX = float.PositiveInfinity,
-		float accelerationY = float.PositiveInfinity,
-		float accelerationZ = float.PositiveInfinity
-	) {
-		this.Velocity = SuperCharacter3DController.ApplyAcceleration(
-			this.Velocity.X,
-			this.Velocity.Y,
-			this.Velocity.Z,
-			targetVelocityX,
-			targetVelocityY,
-			targetVelocityZ,
-			accelerationX,
-			accelerationY,
-			accelerationZ
-		);
-    }
-
-	/// <summary>
-	/// Same as <code>Accelerate</code> but only applies acceleration to the X and Z axis.
-	/// </summary>
-	public void AccelerateXZ(Vector2 targetVelocityXZ, Vector2 accelerationXZ)
-	{
-		this.Velocity = new Vector3(
-			SuperCharacter3DController.ApplyAcceleration(this.Velocity.X, targetVelocityXZ.X, accelerationXZ.X),
-			this.Velocity.Y,
-			SuperCharacter3DController.ApplyAcceleration(this.Velocity.Z, targetVelocityXZ.Y, accelerationXZ.Y)
-		);
-	}
-
-	/// <summary>
-	/// Same as <code>Accelerate</code> but only applies acceleration to the Y axis.
-	/// </summary>
-	public void AccelerateY(float targetVelocityY, float accelerationY)
-	{
-		this.Velocity = new Vector3(
-			this.Velocity.X,
-			SuperCharacter3DController.ApplyAcceleration(this.Velocity.Y, targetVelocityY, accelerationY),
-			this.Velocity.Z
-		);
-	}
-
-	public static Vector3 ApplyAcceleration(Vector3 currentVelocity, Vector3 targetVelocity, Vector3 acceleration)
-	{
-		return SuperCharacter3DController.ApplyAcceleration(
-			currentVelocity.X,
-			currentVelocity.Y,
-			currentVelocity.Z,
-			targetVelocity.X,
-			targetVelocity.Y,
-			targetVelocity.Z,
-			acceleration.X,
-			acceleration.Y,
-			acceleration.Z
-		);
-	}
-
-	public static Vector3 ApplyAcceleration(
-		float currentVelocityX,
-		float currentVelocityY,
-		float currentVelocityZ,
-		float targetVelocityX,
-		float targetVelocityY,
-		float targetVelocityZ,
-		float accelerationX,
-		float accelerationY,
-		float accelerationZ
-	) {
-		return new Vector3(
-			SuperCharacter3DController.ApplyAcceleration(currentVelocityX, targetVelocityX, accelerationX),
-			SuperCharacter3DController.ApplyAcceleration(currentVelocityY, targetVelocityY, accelerationY),
-			SuperCharacter3DController.ApplyAcceleration(currentVelocityZ, targetVelocityZ, accelerationZ)
-		);
-	}
-
-	public static float ApplyAcceleration(float currentVelocity, float targetVelocity, float acceleration)
-	{
-		return Mathf.MoveToward(currentVelocity, targetVelocity, acceleration);
+		this.Velocity = this.Velocity with {
+			Y = Mathf.MoveToward(this.Velocity.Y, movement.Speed, movement.Acceleration * this.PhysicsDelta)
+		};
 	}
 }

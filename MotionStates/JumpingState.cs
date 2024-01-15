@@ -12,7 +12,7 @@ public partial class JumpingState : BaseAirState
     {
         base.OnEnter(transition);
         this.Settings = transition.Data.HasValue && transition.Data.Value.AsUInt64() != 0
-            ? GeneralUtility.GetResource<JumpSettings>(transition.Data.Value.AsUInt64())
+            ? GodotUtil.GetResource<JumpSettings>(transition.Data.Value.AsUInt64())
             : this.Character.Settings.Jump;
     }
 
@@ -37,9 +37,8 @@ public partial class JumpingState : BaseAirState
     {
         base.OnPhysicsProcessState(delta);
 
-        // Calculate horizontal velocity
-        (Vector2 velocityXZ, Vector2 accelerationXZ) = this.Character.CalculateHorizontalOnAirPhysics(delta, default, this.Settings);
-        this.Character.AccelerateXZ(velocityXZ, accelerationXZ);
+        // Apply horizontal velocity
+        this.Character.ApplyHorizontalMovement(this.Character.CalculateOnAirHorizontalMovement(default, this.Settings));
 
         // Calculate vertical velocity
         // TODO We could precalculate the jump height curve so that we don't need to read the curve twice every frame.
@@ -50,8 +49,7 @@ public partial class JumpingState : BaseAirState
         float lastFrameHeightMultiplier = this.Settings.JumpHeightCurve?.Sample(lastFrameProgress)
             ?? (float) Math.Sin(lastFrameProgress * Math.PI / 2);
         float heightDiffPx = this.Settings.JumpHeightUn * (thisFrameHeightMultiplier - lastFrameHeightMultiplier);
-        float velocityY = heightDiffPx / delta;
-        this.Character.AccelerateY(velocityY, float.PositiveInfinity);
+        this.Character.Velocity = this.Character.Velocity with { Y = heightDiffPx / delta };
 
         // Perform movement
         this.Character.MoveAndSlide();

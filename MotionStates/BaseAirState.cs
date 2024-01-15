@@ -13,12 +13,6 @@ public abstract partial class BaseAirState : BaseMotionState
 		}
     }
 
-	public override void OnPhysicsProcessState(float delta)
-	{
-		base.OnPhysicsProcessState(delta);
-		this.Character.Rotation = this.Character.CalculateRotationEuler();
-	}
-
 	// TODO This is not working property. Supposedly, we should check if the character is about to land every frame and
 	// don't trigger the dash if it is—the dash input should be buffered and consumed when the character is on the floor
 	// to start a ground dash.

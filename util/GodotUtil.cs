@@ -4,7 +4,7 @@ using Godot;
 
 namespace Raele.SuperCharacter3D;
 
-public static class GeneralUtility {
+public static class GodotUtil {
 	public static T GetResource<T>(ulong resourceId) where T : Resource {
 		GodotObject resource = Resource.InstanceFromId(resourceId);
 		if (resource == null) {
@@ -47,5 +47,15 @@ public static class GeneralUtility {
 		}
 		nodeT = null;
 		return false;
+	}
+
+    public static Vector2 V3ToHV2(Vector3 v)
+    {
+		return new Vector2(v.X, v.Z);
+    }
+
+	public static Vector3 HV2ToV3(Vector2 v)
+	{
+		return new Vector3(v.X, 0, v.Y);
 	}
 }

@@ -33,20 +33,8 @@ public partial class OnFootState : BaseGroundedState
     public override void OnPhysicsProcessState(float delta)
     {
         base.OnPhysicsProcessState(delta);
-
-		// Calculate horizontal velocity
-		(Vector2 velocityXZ, Vector2 accelerationXZ) = this.Character.CalculateHorizontalOnFootPhysics(delta);
-
-		// Calculate vertical velocity
-		(float velocityY, float accelerationY) = this.Character.CalculateVerticalOnFootPhysics();
-
-		// Apply acceleration
-		this.Character.Accelerate(velocityXZ, velocityY, accelerationXZ, accelerationY);
-
-		// Updates facing direction
-		this.Character.Rotation = this.Character.CalculateRotationEuler();
-
-		// Perform movement
+		this.Character.ApplyHorizontalMovement(this.Character.CalculateOnFootHorizontalMovement());
+		this.Character.ApplyVerticalMovement(this.Character.CalculateOnFootVerticalMovement());
 		this.Character.MoveAndSlide();
     }
 }

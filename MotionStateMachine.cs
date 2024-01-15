@@ -47,8 +47,6 @@ public partial class MotionStateMachine : Node
 		this.CurrentState?.OnPhysicsProcessState((float) delta);
 	}
 
-
-
     public void Transition<T>(Variant? data = null) where T : MotionState
     {
 		this.Transition(typeof(T).Name, data);
@@ -168,6 +166,7 @@ public partial class MotionStateMachine : Node
 	/// </summary>
 	public void Reset()
 	{
+		this.Character.ApplyFloorSnap();
 		if (this.Character.IsOnFloor()) {
 			this.Transition<OnFootState>();
 		} else {
