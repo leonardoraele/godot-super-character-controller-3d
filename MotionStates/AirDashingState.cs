@@ -50,7 +50,7 @@ public partial class AirDashingState : BaseAirState
         });
         this.Character.ApplyVerticalMovement(
             this.Settings.IgnoresGravity
-                ? new() { Speed = 0 }
+                ? new() { TargetVerticalSpeed = 0 }
                 : this.Character.CalculateOnAirVerticalMovement()
         );
         this.Character.MoveAndSlide();

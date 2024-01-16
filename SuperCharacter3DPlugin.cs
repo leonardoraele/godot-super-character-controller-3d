@@ -30,6 +30,7 @@ public partial class SuperCharacter3DPlugin : EditorPlugin
             nameof(SlideState),
             nameof(WallClimbingState),
             nameof(WallSlidingState),
+            nameof(GlideState),
         };
         foreach (string stateName in states) {
             Script script = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(MotionStates)}/{stateName}.cs");

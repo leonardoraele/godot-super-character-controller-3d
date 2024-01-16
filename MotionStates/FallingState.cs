@@ -9,6 +9,12 @@ public partial class FallingState : BaseAirState
         base.OnProcessState(delta);
         if (this.Character.IsOnFloor()) {
             this.Character.StateMachine.Transition<OnFootState>();
+        } else if (
+            Input.IsActionPressed(this.Character.Settings.Input.JumpAction)
+            // && this.Character.StateMachine.GetNode(nameof(GlideState)) is GlideState glideState
+            // && glideState.CanGlide != null
+        ) {
+            this.Character.StateMachine.Transition<GlideState>();
         }
         // TODO
         // else if (

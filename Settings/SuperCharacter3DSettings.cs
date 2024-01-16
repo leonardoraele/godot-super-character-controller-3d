@@ -8,6 +8,7 @@ public partial class SuperCharacter3DSettings : Resource
 	[Export] public InputSettings Input = new InputSettings();
 	[Export] public MovementSettings Movement = new MovementSettings();
 	[Export] public JumpSettings Jump = new JumpSettings();
+	[Export] public GlideSettings? Glide;
 	[Export] public CrouchSettings? Crouch;
 	[Export] public DashSettings? Dash;
 	[Export] public AirDashSettings? AirDash;

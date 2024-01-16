@@ -28,7 +28,7 @@ public partial class JumpCanceledState : BaseMotionState
         base.OnPhysicsProcessState(delta);
         this.Character.ApplyHorizontalMovement(this.Character.CalculateOnAirHorizontalMovement());
         this.Character.ApplyVerticalMovement(new() {
-            Speed = 0,
+            TargetVerticalSpeed = float.NegativeInfinity,
             Acceleration = this.Settings.Gravity.FallAccelerationUnPSecSq * this.Settings.JumpCancelAccelerationMultiplier,
         });
         this.Character.MoveAndSlide();

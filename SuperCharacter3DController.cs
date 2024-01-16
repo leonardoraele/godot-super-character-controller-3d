@@ -109,7 +109,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     // PHYSICS UTILITY METHODS
     // -----------------------------------------------------------------------------------------------------------------
 
-	private HorizontalMovement CalculateHorizontalMovement(MovementSettings? settings = null) {
+	public HorizontalMovement CalculateHorizontalMovement(MovementSettings? settings = null) {
 		settings ??= this.Settings.Movement;
 		Vector2 inputDirection = this.InputController.MovementInput
 			.Rotated(this.GetViewport().GetCamera3D().Rotation.Y * -1);
@@ -173,15 +173,16 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 
 	public virtual VerticalMovement CalculateOnFootVerticalMovement()
 	{
-		return new VerticalMovement { Speed = 0, Acceleration = float.PositiveInfinity, SnapToFloor = true };
+		return new VerticalMovement { TargetVerticalSpeed = 0, Acceleration = float.PositiveInfinity, SnapToFloor = true };
 	}
 
-	public virtual VerticalMovement CalculateOnAirVerticalMovement(JumpSettings? settings = null)
+	public virtual VerticalMovement CalculateOnAirVerticalMovement(JumpSettings? jump = null, GravitySettings? gravity = null)
 	{
-		settings ??= this.Settings.Jump;
+		jump ??= this.Settings.Jump;
+		gravity ??= jump.Gravity ?? this.Settings.Jump.Gravity;
 		return new VerticalMovement {
-			Speed = settings.Gravity.MaxFallSpeedUnPSec * -1,
-			Acceleration = settings.Gravity.FallAccelerationUnPSecSq,
+			TargetVerticalSpeed = gravity.MaxFallSpeedUnPSec * -1,
+			Acceleration = gravity.FallAccelerationUnPSecSq,
 		};
 	}
 
@@ -209,7 +210,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 			this.ApplyFloorSnap();
 		}
 		this.Velocity = this.Velocity with {
-			Y = Mathf.MoveToward(this.Velocity.Y, movement.Speed, movement.Acceleration * this.PhysicsDelta)
+			Y = Mathf.MoveToward(this.Velocity.Y, movement.TargetVerticalSpeed, movement.Acceleration * this.PhysicsDelta)
 		};
 	}
 
