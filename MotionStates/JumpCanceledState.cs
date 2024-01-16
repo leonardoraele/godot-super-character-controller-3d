@@ -17,7 +17,7 @@ public partial class JumpCanceledState : BaseMotionState
     public override void OnProcessState(float delta)
     {
         base.OnProcessState(delta);
-        if (this.Character.Velocity.Y >= 0)
+        if (this.Character.Velocity.Y <= 0)
         {
             this.Character.StateMachine.Transition<FallingState>();
         }

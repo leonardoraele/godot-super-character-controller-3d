@@ -60,7 +60,7 @@ public partial class MotionStateMachine : Node
 			PreviousStateName = this.CurrentState?.Name,
 			NextStateName = nextStateName,
 		};
-		this.QueuedTransition.OnCancel += this.CancelTransition;
+		this.QueuedTransition.CanceledEvent += this.CancelTransition;
 	}
 
 	public void CancelTransition()
@@ -73,22 +73,6 @@ public partial class MotionStateMachine : Node
 		if (this.QueuedTransition == null) {
 			return;
 		}
-
-		if (!(this.GetNode<MotionState>(this.QueuedTransition.NextStateName) is MotionState nextState)) {
-			GD.PushError(
-				"Failed to transition motion states. ",
-				"Cause: State not found. ",
-				"State: ", this.QueuedTransition.NextStateName, ". ",
-				"Did you forget to add the state node to the ", nameof(MotionStateMachine), " node? ",
-				nameof(MotionStateMachine), " path: ", this.GetPath()
-			);
-			return;
-		}
-
-		GD.PrintS(
-			nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
-			"🔄", this.QueuedTransition.PreviousStateName, "->", this.QueuedTransition.NextStateName
-		);
 
 		StateTransition currentTransition = this.QueuedTransition;
 
@@ -105,20 +89,32 @@ public partial class MotionStateMachine : Node
 				if (this.QueuedTransition == null) {
 					GD.PrintS(
 						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
-						"🚫", "Transition canceled by", $"{this.CurrentState?.Name}.{nameof(MotionState.OnExit)}."
+						"🔄", currentTransition.PreviousStateName, "->", currentTransition.NextStateName,
+						"🚫", "Canceled by", $"{this.CurrentState?.Name}.{nameof(MotionState.OnExit)}."
 					);
 					return;
 				} else {
-					currentTransition = this.QueuedTransition;
 					GD.PrintS(
 						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
-						"🔄", "Queued transition was changed by", $"{this.CurrentState?.Name}.{nameof(MotionState.OnExit)}.",
-						"New queued next state:", this.QueuedTransition.NextStateName
+						"🔄", currentTransition.PreviousStateName, "->", currentTransition.NextStateName,
+						"🔄", "Redirected by", $"{this.CurrentState?.Name}.{nameof(MotionState.OnExit)}",
+						"to ->", this.QueuedTransition.NextStateName
 					);
+					currentTransition = this.QueuedTransition;
 				}
 			}
-
 			this.CurrentState = null;
+		}
+
+		if (!(this.GetNode<MotionState>(this.QueuedTransition.NextStateName) is MotionState nextState)) {
+			GD.PushError(
+				"Failed to transition motion states. ",
+				"Cause: State not found. ",
+				"State: ", this.QueuedTransition.NextStateName, ". ",
+				"Did you forget to add the state node to the ", nameof(MotionStateMachine), " node? ",
+				nameof(MotionStateMachine), " path: ", this.GetPath()
+			);
+			return;
 		}
 
 		// Enter new state
@@ -134,21 +130,27 @@ public partial class MotionStateMachine : Node
 				if (this.QueuedTransition == null) {
 					GD.PrintS(
 						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
-						"🚫", "Transition canceled by", $"{nextState.Name}.{nameof(nextState.OnEnter)}"
+						"🚫", "Canceled by", $"{nextState.Name}.{nameof(nextState.OnEnter)}"
 					);
 					this.Reset();
 					return;
 				} else {
 					GD.PrintS(
 						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
-						"🔄", "Queued transition was changed by", $"{nextState.Name}.{nameof(nextState.OnEnter)}",
-						"New queued next state:", this.QueuedTransition.NextStateName
+						"🔄", "Redirected by", $"{nextState.Name}.{nameof(nextState.OnEnter)}",
+						"->", this.QueuedTransition.NextStateName
 					);
-					this.CallDeferred(nameof(this.PerformTransition));
+ 					this.CallDeferred(nameof(this.PerformTransition));
 					return;
 				}
 			}
 		}
+
+		GD.PrintS(
+			nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
+			"🔄", this.QueuedTransition.PreviousStateName, "->", this.QueuedTransition.NextStateName,
+			"(complete)"
+		);
 
 		this.QueuedTransition = null;
 		this.CurrentState = nextState;

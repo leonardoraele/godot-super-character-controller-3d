@@ -31,12 +31,6 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	[Export] public CollisionShape3D? SlideShape { get; private set; }
 
 	// -----------------------------------------------------------------------------------------------------------------
-	// SIGNALS
-	// -----------------------------------------------------------------------------------------------------------------
-
-	[Signal] public delegate void MotionStateChangedEventHandler(BaseMotionState newState, BaseMotionState? oldState);
-
-	// -----------------------------------------------------------------------------------------------------------------
 	// FIELDS & PROPERTIES
 	// -----------------------------------------------------------------------------------------------------------------
 
@@ -46,7 +40,11 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     public InputController InputController { get; private set; } = null!; // Initialized on _Ready
     public Vector3 LastOnFloorPosition { get; private set; }
 
-	public Vector3 Forward => this.Basis.Z * -1;
+	// -----------------------------------------------------------------------------------------------------------------
+	// INTERNAL TYPES
+	// -----------------------------------------------------------------------------------------------------------------
+
+	public enum CollisionShape { StandUp, Crouch, Crawl, Slide };
 
     // -----------------------------------------------------------------------------------------------------------------
     // METHODS
@@ -116,6 +114,14 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 		Vector2 inputDirection = this.InputController.MovementInput
 			.Rotated(this.GetViewport().GetCamera3D().Rotation.Y * -1);
 		float currentSpeedUnPSec = GodotUtil.V3ToHV2(this.Velocity).Length();
+		float turnSpeedDgPSec = currentSpeedUnPSec < 0.01f
+			? float.PositiveInfinity
+			: settings.TurnSpeedDgPSec
+			* (
+				settings.MaxSpeedUnPSec != 0 && settings.TurnSpeedModifier != null
+					? settings.TurnSpeedModifier.Sample(Mathf.Min(1, currentSpeedUnPSec / settings.MaxSpeedUnPSec))
+					: 1
+			);
 		float targetSpeedUnPSec = inputDirection.Length() * settings.MaxSpeedUnPSec;
 		float turnAngleDg = targetSpeedUnPSec > 0.01f && currentSpeedUnPSec > 0.01f
 			? Math.Abs(Mathf.RadToDeg(GodotUtil.V3ToHV2(this.Velocity).AngleTo(inputDirection)))
@@ -126,14 +132,14 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 				TargetSpeedUnPSec = 0,
 				AccelerationUnPSecSq = settings._180TurnDecelerationUnPSecSq
 			};
-		} else if (Math.Abs(turnAngleDg - settings.HarshTurnBeginAngleDg) > 0.01f) {
+		} else if (turnAngleDg > settings.HarshTurnBeginAngleDg) {
 			float velocityMultiplier = Mathf.Pow(
 				1 - (turnAngleDg - settings.HarshTurnBeginAngleDg) / (settings.HarshTurnMaxAngleDg - settings.HarshTurnBeginAngleDg),
 				settings.HarshTurnVelocityLossFactor
 			);
 			return new HorizontalMovement {
 				TargetDirection = inputDirection,
-				RotationalSpeedDgPSec = settings.TurnAngleDgPSec,
+				RotationalSpeedDgPSec = turnSpeedDgPSec,
 				TargetSpeedUnPSec = currentSpeedUnPSec * velocityMultiplier,
 				AccelerationUnPSecSq = float.PositiveInfinity
 			};
@@ -143,7 +149,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 			: settings.DecelerationUnPSecSq;
 		return new HorizontalMovement {
 			TargetDirection = inputDirection,
-			RotationalSpeedDgPSec = settings.TurnAngleDgPSec,
+			RotationalSpeedDgPSec = turnSpeedDgPSec,
 			TargetSpeedUnPSec = targetSpeedUnPSec,
 			AccelerationUnPSecSq = accelerationUnPSecSq
 		};
@@ -182,22 +188,17 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	public void ApplyHorizontalMovement(HorizontalMovement movement)
 	{
 		// Vector2.AngleTo -> clockwise is positive (returns positive if the given vector is in clockwise direction to this vector)
-		float turnAngleRad = movement.TargetSpeedUnPSec > 0.01f && this.Velocity.Length() > 0.01f
-			? GodotUtil.V3ToHV2(this.Velocity).AngleTo(movement.TargetDirection) * -1
+		float turnAngleRad = movement.TargetDirection.Length() > 0.01f
+			? movement.TargetDirection.AngleTo(GodotUtil.V3ToHV2(this.Basis.Z * -1))
 			: 0;
-		float RotationalSpeedRadPSec = Mathf.DegToRad(movement.RotationalSpeedDgPSec);
-		Vector3 newDirection = Math.Abs(turnAngleRad) < 0.001f
-			? movement.TargetDirection.Length() > 0.01f
-				? GodotUtil.HV2ToV3(movement.TargetDirection)
-				: this.Basis.Z * -1
-			: (this.Basis.Z * -1).Rotated(
+		float rotationalSpeedRadPSec = Mathf.DegToRad(movement.RotationalSpeedDgPSec);
+		Vector3 newDirection = (this.Basis.Z * -1)
+			.Rotated(
 				Vector3.Up,
-				RotationalSpeedRadPSec * this.PhysicsDelta > Math.Abs(turnAngleRad)
-					? turnAngleRad
-					: RotationalSpeedRadPSec * this.PhysicsDelta * Math.Sign(turnAngleRad)
+				Math.Min(Math.Abs(turnAngleRad), rotationalSpeedRadPSec * this.PhysicsDelta) * Math.Sign(turnAngleRad)
 			);
 		this.Rotation = Vector3.Up * GodotUtil.V3ToHV2(newDirection).AngleTo(Vector2.Up);
-		float currentHorizontalSpeed = new Vector2(this.Velocity.X, this.Velocity.Z).Length();
+		float currentHorizontalSpeed = GodotUtil.V3ToHV2(this.Velocity).Length();
 		float newHorizontalSpeed = Mathf.MoveToward(currentHorizontalSpeed, movement.TargetSpeedUnPSec, movement.AccelerationUnPSecSq * this.PhysicsDelta);
 		this.Velocity = newDirection * newHorizontalSpeed + Vector3.Up * this.Velocity.Y;
 	}
@@ -210,5 +211,24 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 		this.Velocity = this.Velocity with {
 			Y = Mathf.MoveToward(this.Velocity.Y, movement.Speed, movement.Acceleration * this.PhysicsDelta)
 		};
+	}
+
+    public void SetCollisionShape(CollisionShape shape)
+    {
+		this.DisableAllCollisionShapes();
+        switch(shape) {
+			case CollisionShape.StandUp: this.StandUpShape?.Set("disabled", false); break;
+			case CollisionShape.Crouch: this.CrouchShape?.Set("disabled", false); break;
+			case CollisionShape.Crawl: this.CrawlShape?.Set("disabled", false); break;
+			case CollisionShape.Slide: this.SlideShape?.Set("disabled", false); break;
+		}
+    }
+
+	public void DisableAllCollisionShapes()
+	{
+		this.StandUpShape?.Set("disabled", true);
+		this.CrouchShape?.Set("disabled", true);
+		this.CrawlShape?.Set("disabled", true);
+		this.SlideShape?.Set("disabled", true);
 	}
 }

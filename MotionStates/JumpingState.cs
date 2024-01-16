@@ -20,14 +20,17 @@ public partial class JumpingState : BaseAirState
     {
         base.OnProcessState(delta);
         // Transition check: Jump -> Jump Canceled
-        if (this.DurationActiveMs >= this.Settings.MinJumpDurationMs
-            && !Input.IsActionPressed(this.Character.Settings.Input.JumpAction)
-            || this.DurationActiveMs >= this.Settings.JumpDurationMs
+        if (
+            this.DurationActiveMs >= this.Settings.JumpDurationMs
             || this.TimeHitCeiling != null
             && (
                 !this.Character.SlideOnCeiling
                 || Time.GetTicksMsec() >= this.TimeHitCeiling.Value + this.Character.Settings.CeilingSlideTimeMs
             )
+        ) {
+            this.Character.StateMachine.Transition<FallingState>();
+        } else if (this.DurationActiveMs >= this.Settings.MinJumpDurationMs
+            && !Input.IsActionPressed(this.Character.Settings.Input.JumpAction)
         ) {
             this.Character.StateMachine.Transition<JumpCanceledState>(this.Settings.GetInstanceId());
         }

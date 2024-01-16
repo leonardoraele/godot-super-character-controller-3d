@@ -5,7 +5,7 @@ namespace Raele.SuperCharacter3D.MotionStates;
 
 public partial class GroundDashingState : BaseGroundedState
 {
-	private DashSettings Settings = null!;
+	protected DashSettings Settings = null!;
 
     public override void OnEnter(StateTransition transition)
     {
@@ -16,17 +16,24 @@ public partial class GroundDashingState : BaseGroundedState
 				: this.Character.Settings.Dash
 			)
 			?? throw new Exception("Failed to start Dash action. Cause: Dash settings are missing.");
-		this.Character.Velocity = (this.Character.InputController.MovementInput3DOrNull ?? this.Character.Basis.Z)
+		if (this.Character.InputController.MovementInput.Length() >= 0.01f) {
+			this.Character.Rotation = Vector3.Up
+				* (
+					this.Character.InputController.MovementInput.AngleTo(Vector2.Up)
+					+ GodotUtil.V3ToHV2(this.GetViewport().GetCamera3D().Basis.Z * -1).AngleTo(Vector2.Up)
+				);
+		}
+		this.Character.Velocity = this.Character.Basis.Z * -1
 			* (
 				this.Character.Velocity.Length()
-				* this.Settings.InitialVelocityModifier
-				+ this.Settings.InitialVelocityBoostUnPSec
+					* this.Settings.InitialVelocityMultiplier
+					+ this.Settings.InitialVelocityAdditionUnPSec
 			);
     }
     public override void OnExit(StateTransition transition)
     {
 		base.OnExit(transition);
-		if (transition.NextStateName == nameof(FallingState) && (this.Settings?.IgnoreGravity ?? false)) {
+		if (transition.NextStateName == nameof(FallingState) && (this.Settings?.IgnoresGravity ?? false)) {
 			transition.Cancel();
 		}
     }
@@ -36,7 +43,9 @@ public partial class GroundDashingState : BaseGroundedState
         base.OnProcessState(delta);
 		if (this.DurationActiveMs > (this.Settings?.MaxDurationSec ?? 0) * 1000) {
 			this.Character.StateMachine.Transition<OnFootState>();
-		} else if (this.Settings != null && this.Settings.VariableLength) {
+		} else if (this.Settings?.VariableLength == true) {
+			// TODO // FIXME Slide is a subclass of ground dash, but for the slide state with variable length, the dash
+			// should end when the crouch button is released, not when the dash button is released.
 			if (!Input.IsActionPressed(this.Character.Settings.Input.DashAction)) {
 				this.Character.StateMachine.Transition<OnFootState>();
 			} else if (this.Character.IsOnFloor() && this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
@@ -50,10 +59,10 @@ public partial class GroundDashingState : BaseGroundedState
 		base.OnPhysicsProcessState(delta);
 		this.Character.ApplyHorizontalMovement(new() {
 			TargetSpeedUnPSec = this.Settings.MaxSpeedUnPSec,
-			TargetDirection = GodotUtil.V3ToHV2(this.Character.Basis.Z * -1),
 			AccelerationUnPSecSq = this.Settings.AccelerationUnPSecSq,
+			TargetDirection = GodotUtil.V3ToHV2(this.Character.Basis.Z * -1),
 		});
-		if (!this.Settings.IgnoreGravity) {
+		if (!this.Settings.IgnoresGravity) {
 			this.Character.ApplyVerticalMovement(this.Character.CalculateOnFootVerticalMovement());
 		}
 		this.Character.MoveAndSlide();

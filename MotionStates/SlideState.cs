@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using Raele.SuperCharacter3D.MotionStates;
 
@@ -19,20 +20,14 @@ public partial class SlideState : GroundDashingState
 
     public override void OnEnter(StateTransition transition)
     {
-        StateTransition dummyTransition = new StateTransition {
-            PreviousStateName = transition.PreviousStateName,
-            NextStateName = transition.NextStateName,
-            Data = transition.Data,
-        };
-        base.OnEnter(dummyTransition);
-        if (dummyTransition.Canceled) {
-            transition.Cancel();
+        base.OnEnter(transition.Chain(new() {
+            Data = this.Character.Settings.Crouch?.Slide?.Momentum?.GetInstanceId()
+                ?? throw new Exception("Failed to enter Slide state. Cause: Slide momentum settings are missing."),
+        }));
+        if (transition.Canceled) {
             return;
         }
-		this.Character.StandUpShape?.Set("disabled", true);
-		this.Character.CrouchShape?.Set("disabled", true);
-		this.Character.CrawlShape?.Set("disabled", true);
-		this.Character.SlideShape?.Set("disabled", false);
+		this.Character.SetCollisionShape(SuperCharacter3DController.CollisionShape.Slide);
     }
 
     public override void OnExit(StateTransition transition)
@@ -44,9 +39,6 @@ public partial class SlideState : GroundDashingState
 		if (!this.CanStandUp || Input.IsActionPressed(this.Character.Settings.Input.CrouchHoldAction)) {
 			this.Character.StateMachine.Transition<CrouchState>();
 		}
-		this.Character.CrouchShape?.Set("disabled", true);
-		this.Character.CrawlShape?.Set("disabled", true);
-		this.Character.SlideShape?.Set("disabled", true);
-		this.Character.StandUpShape?.Set("disabled", false);
+        this.Character.SetCollisionShape(SuperCharacter3DController.CollisionShape.StandUp);
     }
 }

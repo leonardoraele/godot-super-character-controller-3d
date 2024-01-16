@@ -28,6 +28,7 @@ public partial class CrouchState : BaseGroundedState
         }
         base.OnEnter(transition);
         this.IsHoldingCrouch = Input.IsActionPressed(this.Character.Settings.Input.CrouchHoldAction);
+        this.Character.SetCollisionShape(SuperCharacter3DController.CollisionShape.Crouch);
     }
     public override void OnExit(StateTransition transition)
     {
@@ -36,6 +37,7 @@ public partial class CrouchState : BaseGroundedState
             transition.Cancel();
             return;
         }
+        this.Character.SetCollisionShape(SuperCharacter3DController.CollisionShape.StandUp);
     }
     public override void OnProcessState(float delta)
     {
@@ -56,11 +58,10 @@ public partial class CrouchState : BaseGroundedState
     public override void OnPhysicsProcessState(float delta)
     {
         base.OnPhysicsProcessState(delta);
-        HorizontalMovement horizontal = this.Character.CalculateOnAirHorizontalMovement();
-        this.Character.ApplyHorizontalMovement(horizontal with {
-            TargetSpeedUnPSec = horizontal.TargetSpeedUnPSec * this.Character.Settings.Crouch?.VelocityModifier ?? 1,
-            AccelerationUnPSecSq = horizontal.AccelerationUnPSecSq * this.Character.Settings.Crouch?.AccelerationyModifier ?? 1,
-        });
+        HorizontalMovement hMovement = this.Character.CalculateOnFootHorizontalMovement();
+        hMovement.TargetSpeedUnPSec *= this.Character.Settings.Crouch?.VelocityModifier ?? 1;
+        hMovement.AccelerationUnPSecSq *= this.Character.Settings.Crouch?.AccelerationyModifier ?? 1;
+        this.Character.ApplyHorizontalMovement(hMovement);
         this.Character.ApplyVerticalMovement(this.Character.CalculateOnFootVerticalMovement());
 		this.Character.MoveAndSlide();
     }

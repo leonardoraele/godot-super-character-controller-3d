@@ -13,15 +13,11 @@ public partial class OnFootState : BaseGroundedState
 			this.Character.StateMachine.Transition<GroundDashingState>();
 		} else if (
 			Input.IsActionJustPressed(this.Character.Settings.Input.CrouchToggleAction)
-			|| Input.IsActionPressed(this.Character.Settings.Input.CrouchHoldAction)
+			|| Input.IsActionJustPressed(this.Character.Settings.Input.CrouchHoldAction)
 		) {
 			if (
 				this.Character.Settings.Crouch?.Slide != null
-				&& this.Character.Velocity.Length() >= (
-					this.Character.Settings.Crouch.Slide.MinSpeedUnPSec < 0
-						? this.Character.Settings.Movement.MaxSpeedUnPSec
-						: this.Character.Settings.Crouch.Slide.MinSpeedUnPSec
-				)
+				&& this.Character.Velocity.Length() + 0.01f >= this.Character.Settings.Crouch.Slide.MinSpeedUnPSec
 			) {
 				this.Character.StateMachine.Transition<SlideState>();
 			} else {

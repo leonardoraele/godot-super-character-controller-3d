@@ -8,9 +8,13 @@ public class StateTransition {
 	public string NextStateName { get; init; } = "";
 	public Variant? Data { get; init; }
 	public bool Canceled { get; private set; }
-	public event Action? OnCancel;
+	public event Action? CanceledEvent;
 	public void Cancel() {
 		this.Canceled = true;
-		this.OnCancel?.Invoke();
+		this.CanceledEvent?.Invoke();
+	}
+	public StateTransition Chain(StateTransition other) {
+		other.CanceledEvent += this.Cancel;
+		return other;
 	}
 }

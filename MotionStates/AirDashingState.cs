@@ -11,8 +11,14 @@ public partial class AirDashingState : BaseAirState
         base.OnEnter(transition);
         this.Settings = transition.Data.HasValue && transition.Data.Value.AsUInt64() != 0
             ? GodotUtil.GetResource<DashSettings>(transition.Data.Value.AsUInt64())
-            : this.Character.Settings.AirDash?.Dash ?? this.Character.Settings.Dash
+            : this.Character.Settings.AirDash?.OverrideSettings ?? this.Character.Settings.Dash
             ?? throw new Exception("No dash settings found.");
+		this.Character.Velocity = (this.Character.InputController.MovementInput3DOrNull ?? this.Character.Basis.Z * -1)
+			* (
+				this.Character.Velocity.Length()
+				* this.Settings.InitialVelocityMultiplier
+				+ this.Settings.InitialVelocityAdditionUnPSec
+			);
     }
     public override void OnExit(StateTransition transition)
     {
@@ -43,7 +49,7 @@ public partial class AirDashingState : BaseAirState
             AccelerationUnPSecSq = this.Settings.AccelerationUnPSecSq,
         });
         this.Character.ApplyVerticalMovement(
-            this.Settings.IgnoreGravity
+            this.Settings.IgnoresGravity
                 ? new() { Speed = 0 }
                 : this.Character.CalculateOnAirVerticalMovement()
         );

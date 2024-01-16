@@ -13,6 +13,6 @@ public partial class SlideSettings : Resource
 	/// Set to any negative number to make the character only be able to slide when their at their maximum movement
 	/// speed.
 	/// </summary>
-	[Export] public float MinSpeedUnPSec = -1;
+	[Export] public float MinSpeedUnPSec = 6;
 	[Export] public DashSettings? Momentum;
 }
