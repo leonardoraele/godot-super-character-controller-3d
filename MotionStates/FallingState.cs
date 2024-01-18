@@ -25,11 +25,17 @@ public partial class FallingState : BaseAirState
         // }
     }
 
-    public override void OnPhysicsProcessState(float delta)
+    public override HorizontalMovement GetHorizontalMovement()
     {
-        base.OnPhysicsProcessState(delta);
-        this.Character.ApplyHorizontalMovement(this.Character.CalculateOnAirHorizontalMovement());
-        this.Character.ApplyVerticalMovement(this.Character.CalculateOnAirVerticalMovement());
-        this.Character.MoveAndSlide();
+        HorizontalMovement hMovement = this.Character.CalculateHorizontalMovement();
+        hMovement.TargetSpeedUnPSec *= this.Character.Settings.Jump.AerialSpeedMultiplier;
+        hMovement.AccelerationUnPSecSq *= this.Character.Settings.Jump.AerialAccelerationMultiplier;
+        return hMovement;
     }
+
+    public override VerticalMovement GetVerticalMovement()
+        => new() {
+            TargetVerticalSpeed = this.Character.Settings.Jump.Gravity.MaxFallSpeedUnPSec * -1,
+            Acceleration = this.Character.Settings.Jump.Gravity.FallAccelerationUnPSecSq,
+        };
 }

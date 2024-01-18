@@ -22,5 +22,12 @@ public abstract partial class BaseMotionState : Node, MotionState
     public virtual void OnEnter(StateTransition transition) {}
 	public virtual void OnExit(StateTransition transition) {}
 	public virtual void OnProcessState(float delta) {}
-	public virtual void OnPhysicsProcessState(float delta) {}
+	public virtual void OnPhysicsProcessState(float delta)
+	{
+		this.Character.ApplyHorizontalMovement(this.GetHorizontalMovement());
+		this.Character.ApplyVerticalMovement(this.GetVerticalMovement());
+		this.Character.MoveAndSlide();
+	}
+	public virtual HorizontalMovement GetHorizontalMovement() => new();
+	public virtual VerticalMovement GetVerticalMovement() => new();
 }

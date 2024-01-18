@@ -55,14 +55,13 @@ public partial class CrouchState : BaseGroundedState
             this.Character.StateMachine.Reset();
         }
     }
-    public override void OnPhysicsProcessState(float delta)
+    public override HorizontalMovement GetHorizontalMovement()
     {
-        base.OnPhysicsProcessState(delta);
-        HorizontalMovement hMovement = this.Character.CalculateOnFootHorizontalMovement();
+        HorizontalMovement hMovement = this.Character.CalculateHorizontalMovement();
         hMovement.TargetSpeedUnPSec *= this.Character.Settings.Crouch?.VelocityModifier ?? 1;
         hMovement.AccelerationUnPSecSq *= this.Character.Settings.Crouch?.AccelerationyModifier ?? 1;
-        this.Character.ApplyHorizontalMovement(hMovement);
-        this.Character.ApplyVerticalMovement(this.Character.CalculateOnFootVerticalMovement());
-		this.Character.MoveAndSlide();
+        return hMovement;
     }
+    public override VerticalMovement GetVerticalMovement()
+        => new() { SnapToFloor = true };
 }

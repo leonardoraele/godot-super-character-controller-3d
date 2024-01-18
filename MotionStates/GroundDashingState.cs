@@ -54,17 +54,13 @@ public partial class GroundDashingState : BaseGroundedState
 		}
     }
 
-	public override void OnPhysicsProcessState(float delta)
-	{
-		base.OnPhysicsProcessState(delta);
-		this.Character.ApplyHorizontalMovement(new() {
+	public override HorizontalMovement GetHorizontalMovement()
+		=> new() {
 			TargetSpeedUnPSec = this.Settings.MaxSpeedUnPSec,
 			AccelerationUnPSecSq = this.Settings.AccelerationUnPSecSq,
 			TargetDirection = GodotUtil.V3ToHV2(this.Character.Basis.Z * -1),
-		});
-		if (!this.Settings.IgnoresGravity) {
-			this.Character.ApplyVerticalMovement(this.Character.CalculateOnFootVerticalMovement());
-		}
-		this.Character.MoveAndSlide();
-	}
+		};
+
+	public override VerticalMovement GetVerticalMovement()
+		=> new() { SnapToFloor = true };
 }

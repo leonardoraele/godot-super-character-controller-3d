@@ -155,37 +155,6 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 		};
 	}
 
-	public virtual HorizontalMovement CalculateOnFootHorizontalMovement(MovementSettings? settings = null)
-	{
-		return this.CalculateHorizontalMovement(settings);
-	}
-
-	public virtual HorizontalMovement CalculateOnAirHorizontalMovement(
-		MovementSettings? movementSettings = null,
-		JumpSettings? jumpSettings = null
-	) {
-		jumpSettings ??= this.Settings.Jump;
-        HorizontalMovement horizontalMovement = this.CalculateOnFootHorizontalMovement(movementSettings);
-		return horizontalMovement with {
-			AccelerationUnPSecSq = horizontalMovement.AccelerationUnPSecSq * jumpSettings.AerialAccelerationMultiplier
-		};
-	}
-
-	public virtual VerticalMovement CalculateOnFootVerticalMovement()
-	{
-		return new VerticalMovement { TargetVerticalSpeed = 0, Acceleration = float.PositiveInfinity, SnapToFloor = true };
-	}
-
-	public virtual VerticalMovement CalculateOnAirVerticalMovement(JumpSettings? jump = null, GravitySettings? gravity = null)
-	{
-		jump ??= this.Settings.Jump;
-		gravity ??= jump.Gravity ?? this.Settings.Jump.Gravity;
-		return new VerticalMovement {
-			TargetVerticalSpeed = gravity.MaxFallSpeedUnPSec * -1,
-			Acceleration = gravity.FallAccelerationUnPSecSq,
-		};
-	}
-
 	public void ApplyHorizontalMovement(HorizontalMovement movement)
 	{
 		// Vector2.AngleTo -> clockwise is positive (returns positive if the given vector is in clockwise direction to this vector)

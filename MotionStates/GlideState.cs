@@ -51,19 +51,19 @@ public partial class GlideState : BaseAirState
         }
     }
 
-    public override void OnPhysicsProcessState(float delta)
+    public override HorizontalMovement GetHorizontalMovement()
     {
-        base.OnPhysicsProcessState(delta);
-        HorizontalMovement vMovement = this.Character.CalculateOnFootHorizontalMovement();
-        vMovement.TargetSpeedUnPSec *= this.Settings.HorizontalMaxSpeedMultiplier;
-        vMovement.AccelerationUnPSecSq *= this.Settings.HorizontalAccelerationMultiplier;
-        this.Character.ApplyHorizontalMovement(vMovement);
-        this.Character.ApplyVerticalMovement(new() {
+        HorizontalMovement hMovement = this.Character.CalculateHorizontalMovement();
+        hMovement.TargetSpeedUnPSec *= this.Settings.HorizontalMaxSpeedMultiplier;
+        hMovement.AccelerationUnPSecSq *= this.Settings.HorizontalAccelerationMultiplier;
+        return hMovement;
+    }
+
+    public override VerticalMovement GetVerticalMovement()
+        => new() {
             TargetVerticalSpeed = this.Settings.GlideFall.MaxFallSpeedUnPSec * -1,
             Acceleration = this.Character.Velocity.Y < this.Settings.GlideFall.MaxFallSpeedUnPSec * -1
                 ? float.PositiveInfinity
                 : this.Settings.GlideFall.FallAccelerationUnPSecSq,
-        });
-        this.Character.MoveAndSlide();
-    }
+        };
 }

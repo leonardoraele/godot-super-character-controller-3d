@@ -26,11 +26,9 @@ public partial class OnFootState : BaseGroundedState
 		}
     }
 
-    public override void OnPhysicsProcessState(float delta)
-    {
-        base.OnPhysicsProcessState(delta);
-		this.Character.ApplyHorizontalMovement(this.Character.CalculateOnFootHorizontalMovement());
-		this.Character.ApplyVerticalMovement(this.Character.CalculateOnFootVerticalMovement());
-		this.Character.MoveAndSlide();
-    }
+    public override HorizontalMovement GetHorizontalMovement()
+		=> this.Character.CalculateHorizontalMovement();
+
+	public override VerticalMovement GetVerticalMovement()
+		=> new() { SnapToFloor = true };
 }

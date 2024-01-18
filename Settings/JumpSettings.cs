@@ -32,6 +32,7 @@ public partial class JumpSettings : Resource
 	[Export(PropertyHint.Range, ".5,3,0.05,or_greater,or_less")] public float JumpCancelAccelerationMultiplier { get; private set; } = 1;
 
 	[ExportGroup("Air Control")]
+	[Export(PropertyHint.Range, "0,2,0.01")] public float AerialSpeedMultiplier { get; private set; } = 1f;
 	[Export(PropertyHint.Range, "0,2,0.01")] public float AerialAccelerationMultiplier { get; private set; } = 1f;
 
 	// [ExportGroup("Air Jumping")]

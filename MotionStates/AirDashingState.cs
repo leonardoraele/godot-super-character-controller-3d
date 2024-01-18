@@ -1,5 +1,4 @@
 using System;
-using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStates;
 
@@ -40,19 +39,18 @@ public partial class AirDashingState : BaseAirState
         }
     }
 
-    public override void OnPhysicsProcessState(float delta)
-    {
-        base.OnPhysicsProcessState(delta);
-        this.Character.ApplyHorizontalMovement(new() {
+    public override HorizontalMovement GetHorizontalMovement()
+        => new() {
             TargetDirection = GodotUtil.V3ToHV2(this.Character.Basis.Z * -1),
             TargetSpeedUnPSec = this.Settings.MaxSpeedUnPSec,
             AccelerationUnPSecSq = this.Settings.AccelerationUnPSecSq,
-        });
-        this.Character.ApplyVerticalMovement(
-            this.Settings.IgnoresGravity
-                ? new() { TargetVerticalSpeed = 0 }
-                : this.Character.CalculateOnAirVerticalMovement()
-        );
-        this.Character.MoveAndSlide();
-    }
+        };
+
+    public override VerticalMovement GetVerticalMovement()
+        => this.Settings.IgnoresGravity
+            ? new() { TargetVerticalSpeed = 0 }
+            : new() {
+                TargetVerticalSpeed = this.Character.Settings.Jump.Gravity.MaxFallSpeedUnPSec * -1,
+                Acceleration = this.Character.Settings.Jump.Gravity.FallAccelerationUnPSecSq,
+            };
 }

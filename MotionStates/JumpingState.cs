@@ -38,10 +38,11 @@ public partial class JumpingState : BaseAirState
 
     public override void OnPhysicsProcessState(float delta)
     {
-        base.OnPhysicsProcessState(delta);
-
         // Apply horizontal velocity
-        this.Character.ApplyHorizontalMovement(this.Character.CalculateOnAirHorizontalMovement(default, this.Settings));
+        HorizontalMovement hMovement = this.Character.CalculateHorizontalMovement();
+        hMovement.TargetSpeedUnPSec *= this.Settings.AerialSpeedMultiplier;
+        hMovement.AccelerationUnPSecSq *= this.Settings.AerialAccelerationMultiplier;
+        this.Character.ApplyHorizontalMovement(hMovement);
 
         // Calculate vertical velocity
         // TODO We could precalculate the jump height curve so that we don't need to read the curve twice every frame.
