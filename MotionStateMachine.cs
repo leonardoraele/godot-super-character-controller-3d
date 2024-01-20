@@ -1,17 +1,18 @@
 using System;
 using Godot;
-using Raele.SuperCharacter3D.MotionStates;
 
 namespace Raele.SuperCharacter3D;
 
 public partial class MotionStateMachine : Node
 {
+	[Export] Node? InitialState;
 	public SuperCharacter3DController Character { get; private set; } = null!;
-	public MotionState? CurrentState { get; private set; }
+	public IMotionState? CurrentState { get; private set; }
+    public IMotionState? PreviousState { get; private set; }
 	public StateTransition? QueuedTransition;
 	private ulong LastStateChangeTimestamp;
 
-	public ulong TimeSinceLastStateChangeMs => Time.GetTicksMsec() - this.LastStateChangeTimestamp;
+    public ulong TimeSinceLastStateChangeMs => Time.GetTicksMsec() - this.LastStateChangeTimestamp;
 
 	[Signal] public delegate void StateChangedEventHandler(string newState, string oldState, Variant data);
 
@@ -35,7 +36,7 @@ public partial class MotionStateMachine : Node
     public override void _Process(double delta)
 	{
 		try {
-			this.CurrentState?.OnProcessState((float) delta);
+			this.CurrentState?.OnProcessStateActive((float) delta);
 		} catch (Exception e) {
 			GD.PushError(e);
 		}
@@ -44,10 +45,10 @@ public partial class MotionStateMachine : Node
 
 	public override void _PhysicsProcess(double delta)
 	{
-		this.CurrentState?.OnPhysicsProcessState((float) delta);
+		this.CurrentState?.OnPhysicsProcessStateActive((float) delta);
 	}
 
-    public void Transition<T>(Variant? data = null) where T : MotionState
+    public void Transition<T>(Variant? data = null) where T : IMotionState
     {
 		this.Transition(typeof(T).Name, data);
     }
@@ -84,29 +85,32 @@ public partial class MotionStateMachine : Node
 				GD.PushError(e);
 			}
 
+			this.CurrentState?.EmitSignal("Exit");
+
 			// This happens if this.Transition or this.CancelTransition have been called during OnExit.
 			if (this.QueuedTransition != currentTransition) {
 				if (this.QueuedTransition == null) {
 					GD.PrintS(
-						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
+						Time.GetTicksMsec(), nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
 						"🔄", currentTransition.PreviousStateName, "->", currentTransition.NextStateName,
-						"🚫", "Canceled by", $"{this.CurrentState?.Name}.{nameof(MotionState.OnExit)}."
+						"🚫", "Canceled by", $"{this.CurrentState?.Name}.{nameof(IMotionState.OnExit)}."
 					);
 					return;
 				} else {
 					GD.PrintS(
-						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
+						Time.GetTicksMsec(), nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
 						"🔄", currentTransition.PreviousStateName, "->", currentTransition.NextStateName,
-						"🔄", "Redirected by", $"{this.CurrentState?.Name}.{nameof(MotionState.OnExit)}",
+						"🔄", "Redirected by", $"{this.CurrentState?.Name}.{nameof(IMotionState.OnExit)}",
 						"to ->", this.QueuedTransition.NextStateName
 					);
 					currentTransition = this.QueuedTransition;
 				}
 			}
+			this.PreviousState = this.CurrentState;
 			this.CurrentState = null;
 		}
 
-		if (!(this.GetNode<MotionState>(this.QueuedTransition.NextStateName) is MotionState nextState)) {
+		if (!(this.GetNode<IMotionState>(this.QueuedTransition.NextStateName) is IMotionState nextState)) {
 			GD.PushError(
 				"Failed to transition motion states. ",
 				"Cause: State not found. ",
@@ -126,17 +130,19 @@ public partial class MotionStateMachine : Node
 				GD.PushError(e);
 			}
 
+			this.CurrentState?.EmitSignal("Enter");
+
 			if (this.QueuedTransition != currentTransition) {
 				if (this.QueuedTransition == null) {
 					GD.PrintS(
-						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
+						Time.GetTicksMsec(), nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
 						"🚫", "Canceled by", $"{nextState.Name}.{nameof(nextState.OnEnter)}"
 					);
 					this.Reset();
 					return;
 				} else {
 					GD.PrintS(
-						nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
+						Time.GetTicksMsec(), nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
 						"🔄", "Redirected by", $"{nextState.Name}.{nameof(nextState.OnEnter)}",
 						"->", this.QueuedTransition.NextStateName
 					);
@@ -147,7 +153,7 @@ public partial class MotionStateMachine : Node
 		}
 
 		GD.PrintS(
-			nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
+			Time.GetTicksMsec(), nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
 			"🔄", this.QueuedTransition.PreviousStateName, "->", this.QueuedTransition.NextStateName,
 			"(complete)"
 		);
@@ -168,11 +174,16 @@ public partial class MotionStateMachine : Node
 	/// </summary>
 	public void Reset()
 	{
-		this.Character.ApplyFloorSnap();
-		if (this.Character.IsOnFloor()) {
-			this.Transition<OnFootState>();
-		} else {
-			this.Transition<FallingState>();
+		if (this.InitialState == null) {
+			GD.PushError(
+				"Failed to reset motion state machine. ",
+				"Cause: Initial state not set. ",
+				"Did you forget to set the ", nameof(this.InitialState), " property? ",
+				nameof(MotionStateMachine), " path: ", this.GetPath()
+			);
+			this.CurrentState = null;
+			return;
 		}
+		this.Transition(this.InitialState.Name);
 	}
 }

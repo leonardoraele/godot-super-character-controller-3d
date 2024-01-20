@@ -1,22 +1,22 @@
 namespace Raele.SuperCharacter3D.MotionStates;
 
-public partial class WallClimbingState : OnWallState
+public partial class WallClimbState : OnWallState
 {
-    public override void OnProcessState(float delta)
+    public override void OnProcessStateActive(float delta)
     {
-        base.OnProcessState(delta);
+        base.OnProcessStateActive(delta);
 		if (this.Character.Settings.Climb == null
 			|| this.DurationActiveMs > this.Character.Settings.Climb.WallMaxDurationSec * 1000
 		) {
-			this.Character.StateMachine.Transition<WallSlidingState>();
+			this.Character.StateMachine.Transition<WallSlideState>();
 		} else if (this.Character.IsOnFloor() && this.Character.Settings.Climb.AutomaticDropOffOnFloor) {
-			this.Character.StateMachine.Transition<OnFootState>();
+			this.Character.StateMachine.Transition<WalkState>();
 		}
     }
 
-    public override void OnPhysicsProcessState(float delta)
+    public override void OnPhysicsProcessStateActive(float delta)
     {
-        base.OnPhysicsProcessState(delta);
+        base.OnPhysicsProcessStateActive(delta);
 		float targetVelocityY = this.Character.InputController.MovementInput.Y
 			* (
 				this.Character.InputController.MovementInput.Y > 0 ? this.Character.Settings.Climb!.DownardMaxSpeedUnPSec

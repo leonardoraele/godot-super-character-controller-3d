@@ -1,18 +1,18 @@
 namespace Raele.SuperCharacter3D.MotionStates;
 
-public partial class WallSlidingState : OnWallState
+public partial class WallSlideState : OnWallState
 {
-    public override void OnProcessState(float delta)
+    public override void OnProcessStateActive(float delta)
     {
-        base.OnProcessState(delta);
+        base.OnProcessStateActive(delta);
 		if (this.Character.IsOnFloor()) {
-			this.Character.StateMachine.Transition<OnFootState>();
+			this.Character.StateMachine.Transition<WalkState>();
 		}
     }
 
-    public override void OnPhysicsProcessState(float delta)
+    public override void OnPhysicsProcessStateActive(float delta)
     {
-        base.OnPhysicsProcessState(delta);
+        base.OnPhysicsProcessStateActive(delta);
         // this.Character.AccelerateY(
         //     this.Character.Settings.Climb?.SlideMaxSpeedUnPSec ?? 0,
         //     this.Character.Settings.Climb?.SlideAccelerationUnPSecSq ?? 0

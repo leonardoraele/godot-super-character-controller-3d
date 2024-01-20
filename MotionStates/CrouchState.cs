@@ -1,12 +1,9 @@
-using System;
 using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStates;
 
-public partial class CrouchState : BaseGroundedState
+public partial class CrouchState : WalkState
 {
-    private bool IsHoldingCrouch;
-
     public bool CanStandUp => !this.Character.IsOnCeiling()
         && this.Character.StandUpShape != null
         && this.Character.CrouchShape != null
@@ -19,49 +16,12 @@ public partial class CrouchState : BaseGroundedState
             )
             == null;
 
-    public override void OnEnter(StateTransition transition)
-    {
-        if (this.Character.Settings.Crouch == null) {
-            throw new Exception($"{nameof(CrouchState)}: {nameof(this.Character.Settings.Crouch)} settings is null. Did you forget to assign this property?");
-        } else if (this.Character.CrouchShape == null) {
-            throw new Exception($"{nameof(CrouchState)}: {nameof(this.Character.CrouchShape)} is null. Did you forget to assign this property?");
-        }
-        base.OnEnter(transition);
-        this.IsHoldingCrouch = Input.IsActionPressed(this.Character.Settings.Input.CrouchHoldAction);
-        this.Character.SetCollisionShape(SuperCharacter3DController.CollisionShape.Crouch);
-    }
     public override void OnExit(StateTransition transition)
     {
-        base.OnExit(transition);
         if (!this.CanStandUp) {
             transition.Cancel();
             return;
         }
-        this.Character.SetCollisionShape(SuperCharacter3DController.CollisionShape.StandUp);
+        base.OnExit(transition);
     }
-    public override void OnProcessState(float delta)
-    {
-        base.OnProcessState(delta);
-        if (this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
-            if (this.Character.Settings.Crouch?.CrouchJump != null) {
-                this.Character.StateMachine.Transition(nameof(JumpingState), this.Character.Settings.Crouch.CrouchJump.GetInstanceId());
-            } else {
-                this.Character.StateMachine.Transition(nameof(JumpingState));
-            }
-        } else if (
-            this.IsHoldingCrouch && !Input.IsActionPressed(this.Character.Settings.Input.CrouchHoldAction)
-            || Input.IsActionJustPressed(this.Character.Settings.Input.CrouchToggleAction)
-        ) {
-            this.Character.StateMachine.Reset();
-        }
-    }
-    public override HorizontalMovement GetHorizontalMovement()
-    {
-        HorizontalMovement hMovement = this.Character.CalculateHorizontalMovement();
-        hMovement.TargetSpeedUnPSec *= this.Character.Settings.Crouch?.VelocityModifier ?? 1;
-        hMovement.AccelerationUnPSecSq *= this.Character.Settings.Crouch?.AccelerationyModifier ?? 1;
-        return hMovement;
-    }
-    public override VerticalMovement GetVerticalMovement()
-        => new() { SnapToFloor = true };
 }

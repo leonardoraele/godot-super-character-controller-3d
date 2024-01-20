@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 namespace Raele.SuperCharacter3D;
@@ -15,8 +16,8 @@ public class InputController
 		// TODO A possible optimization would be to save the buffer duration and input action name in a field if game
 		// was build for production so we don't need to call an anonymous function every frame; but I don't know how to
 		// use build-time variables. (nor if it's even supported)
-		public Func<ulong> InputBufferDurationMs { get; init; } = () => 0;
-		public Func<string> InputActionName { get; init; } = () => "";
+		public Func<ulong> InputBufferDurationMs { get; set; } = () => 150;
+		public string InputActionName { get; set; } = "";
 		public bool ConsumeInput()
 		{
             bool result = this.IsInputBuffered;
@@ -25,7 +26,7 @@ public class InputController
 		}
 		public void Update()
 		{
-			if (Input.IsActionJustPressed(this.InputActionName())) {
+			if (!string.IsNullOrEmpty(this.InputActionName) && Input.IsActionJustPressed(this.InputActionName)) {
 				this.ProduceInput();
 			}
 		}
@@ -33,19 +34,9 @@ public class InputController
 	}
 
 	public Vector2 MovementInput { get; private set; }
-	public bool HasMovementInput => this.MovementInput.Length() >= 0.01f;
-	public Vector2? MovementInputOrNull => this.HasMovementInput
-		? this.MovementInput
-		: null;
-	public Vector3 MovementInput3D => new Vector3(this.MovementInput.X, 0, this.MovementInput.Y);
-	public Vector3? MovementInput3DOrNull => this.HasMovementInput
-		? this.MovementInput3D
-		: null;
 
-	public InputBuffer JumpInputBuffer { get; private set; }
-	public InputBuffer DashInputBuffer { get; private set; }
+	private Dictionary<string, InputBuffer> InputBufferDict = new();
 
-	public bool Enabled = true;
 	private ISuperPlatformer3DCharacter Character;
 
 	public interface ISuperPlatformer3DCharacter {
@@ -55,29 +46,26 @@ public class InputController
 	public InputController(ISuperPlatformer3DCharacter character)
 	{
 		this.Character = character;
-		this.JumpInputBuffer = new InputBuffer() {
-			InputBufferDurationMs = () => this.Character.Settings.JumpInputBufferSensitivityMs,
-			InputActionName = () => this.Character.Settings.Input.JumpAction
-		};
-		this.DashInputBuffer = new InputBuffer() {
-			InputBufferDurationMs = () => this.Character.Settings.DashInputBufferSensitivityMs,
-			InputActionName = () => this.Character.Settings.Input.DashAction
-		};
 	}
 
 	public void Update()
 	{
-		if (!this.Enabled) {
-			this.MovementInput = Vector2.Zero;
-			return;
-		}
 		this.MovementInput = Input.GetVector(
 			this.Character.Settings.Input.MoveCameraLeftAction,
 			this.Character.Settings.Input.MoveCameraRightAction,
 			this.Character.Settings.Input.MoveCameraFrontAction,
 			this.Character.Settings.Input.MoveCameraBackAction
 		);
-		this.JumpInputBuffer.Update();
-		this.DashInputBuffer.Update();
+		foreach (var inputBuffer in this.InputBufferDict.Values) {
+			inputBuffer.Update();
+		}
+	}
+
+	public InputBuffer GetInputBuffer(string actionName)
+	{
+		if (!this.InputBufferDict.ContainsKey(actionName)) {
+			this.InputBufferDict[actionName] = new InputBuffer() { InputActionName = actionName };
+		}
+		return this.InputBufferDict[actionName];
 	}
 }

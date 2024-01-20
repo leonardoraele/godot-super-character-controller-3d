@@ -23,9 +23,9 @@ public partial class InteractingState : BaseMotionState
 		this.Ended = false;
 	}
 
-    public override void OnProcessState(float delta)
+    public override void OnProcessStateActive(float delta)
     {
-        base.OnProcessState(delta);
+        base.OnProcessStateActive(delta);
 		if (this.IsDue) {
 			this.Ended = true;
 			if (this.OnFinished != null) {

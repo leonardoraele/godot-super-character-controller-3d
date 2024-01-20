@@ -9,7 +9,7 @@ public partial class SuperCharacter3DPlugin : EditorPlugin
 {
     public override void _EnterTree()
     {
-        Texture2D icon = GD.Load<Texture2D>($"res://addons/{nameof(SuperCharacter3D)}/icon.svg");
+        Texture2D icon = ImageTexture.CreateFromImage(Image.Create(16, 16, false, Image.Format.L8));
         Script controller = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(SuperCharacter3DController)}.cs");
         Script stateMachine = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(MotionStateMachine)}.cs");
         Script debugPanel = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(Debug.SuperCharacter3DDebugPanel)}.cs");
@@ -17,20 +17,23 @@ public partial class SuperCharacter3DPlugin : EditorPlugin
         this.AddCustomType(nameof(MotionStateMachine), nameof(Node), stateMachine, icon);
         this.AddCustomType(nameof(Debug.SuperCharacter3DDebugPanel), nameof(ColorRect), debugPanel, icon);
 
+        this.AddCustomType(
+            nameof(InputActionAbility),
+            nameof(Node),
+            GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/Abilities/{nameof(InputActionAbility)}.cs"),
+            icon
+        );
+
         // Motion state nodes
         string[] states = new string[] {
-            nameof(AirDashingState),
             nameof(CrouchState),
-            nameof(FallingState),
-            nameof(GroundDashingState),
+            nameof(FallState),
             nameof(InteractingState),
-            nameof(JumpCanceledState),
-            nameof(JumpingState),
-            nameof(OnFootState),
-            nameof(SlideState),
-            nameof(WallClimbingState),
-            nameof(WallSlidingState),
-            nameof(GlideState),
+            nameof(JumpState),
+            nameof(WalkState),
+            nameof(WallClimbState),
+            nameof(WallSlideState),
+            nameof(PropelState),
         };
         foreach (string stateName in states) {
             Script script = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(MotionStates)}/{stateName}.cs");

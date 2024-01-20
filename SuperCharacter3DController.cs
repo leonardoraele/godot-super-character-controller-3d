@@ -139,7 +139,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 			);
 			return new HorizontalMovement {
 				TargetDirection = inputDirection,
-				RotationalSpeedDgPSec = turnSpeedDgPSec,
+				RotationSpeedDegPSec = turnSpeedDgPSec,
 				TargetSpeedUnPSec = currentSpeedUnPSec * velocityMultiplier,
 				AccelerationUnPSecSq = float.PositiveInfinity
 			};
@@ -149,7 +149,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 			: settings.DecelerationUnPSecSq;
 		return new HorizontalMovement {
 			TargetDirection = inputDirection,
-			RotationalSpeedDgPSec = turnSpeedDgPSec,
+			RotationSpeedDegPSec = turnSpeedDgPSec,
 			TargetSpeedUnPSec = targetSpeedUnPSec,
 			AccelerationUnPSecSq = accelerationUnPSecSq
 		};
@@ -157,11 +157,10 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 
 	public void ApplyHorizontalMovement(HorizontalMovement movement)
 	{
-		// Vector2.AngleTo -> clockwise is positive (returns positive if the given vector is in clockwise direction to this vector)
 		float turnAngleRad = movement.TargetDirection.Length() > 0.01f
 			? movement.TargetDirection.AngleTo(GodotUtil.V3ToHV2(this.Basis.Z * -1))
 			: 0;
-		float rotationalSpeedRadPSec = Mathf.DegToRad(movement.RotationalSpeedDgPSec);
+		float rotationalSpeedRadPSec = Mathf.DegToRad(movement.RotationSpeedDegPSec);
 		Vector3 newDirection = (this.Basis.Z * -1)
 			.Rotated(
 				Vector3.Up,
