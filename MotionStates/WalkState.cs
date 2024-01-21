@@ -17,7 +17,7 @@ public partial class WalkState : BaseMotionState
 	/// If set to a very high value (e.g. 999999), the player will be able to turn instantly to any direction. Do not
 	/// set it to 0, or the character will only be able to move forward.
 	/// </summary>
-	[Export] public float TurnSpeedDgPSec = 540;
+	[Export] public float TurnSpeedDgPSec = 720;
 	/// <summary>
 	/// Curve that modifies the turn speed based on the current speed of the character. The X axis represents the speed
 	/// of the character, from 0 to the value set in <see cref="MaxSpeedUnPSec"/>; and the Y axis represents the
@@ -84,8 +84,7 @@ public partial class WalkState : BaseMotionState
 
     public override HorizontalMovement GetHorizontalMovement()
 	{
-		Vector2 inputDirection = this.Character.InputController.MovementInput
-			.Rotated(this.GetViewport().GetCamera3D().Rotation.Y * -1);
+		Vector2 inputDirection = this.Character.InputController.GetRelativeMovementInput(this.Character.GetViewport());
 		float currentSpeedUnPSec = GodotUtil.V3ToHV2(this.Character.Velocity).Length();
 		float turnSpeedDgPSec = currentSpeedUnPSec < 0.01f
 			? float.PositiveInfinity

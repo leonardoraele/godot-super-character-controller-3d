@@ -109,52 +109,6 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     // PHYSICS UTILITY METHODS
     // -----------------------------------------------------------------------------------------------------------------
 
-	public HorizontalMovement CalculateHorizontalMovement(MovementSettings? settings = null) {
-		settings ??= this.Settings.Movement;
-		Vector2 inputDirection = this.InputController.MovementInput
-			.Rotated(this.GetViewport().GetCamera3D().Rotation.Y * -1);
-		float currentSpeedUnPSec = GodotUtil.V3ToHV2(this.Velocity).Length();
-		float turnSpeedDgPSec = currentSpeedUnPSec < 0.01f
-			? float.PositiveInfinity
-			: settings.TurnSpeedDgPSec
-			* (
-				settings.MaxSpeedUnPSec != 0 && settings.TurnSpeedModifier != null
-					? settings.TurnSpeedModifier.Sample(Mathf.Min(1, currentSpeedUnPSec / settings.MaxSpeedUnPSec))
-					: 1
-			);
-		float targetSpeedUnPSec = inputDirection.Length() * settings.MaxSpeedUnPSec;
-		float turnAngleDg = targetSpeedUnPSec > 0.01f && currentSpeedUnPSec > 0.01f
-			? Math.Abs(Mathf.RadToDeg(GodotUtil.V3ToHV2(this.Velocity).AngleTo(inputDirection)))
-			: 0;
-		if (turnAngleDg > settings.HarshTurnMaxAngleDg) {
-			return new HorizontalMovement {
-				TargetDirection = GodotUtil.V3ToHV2(this.Velocity).Normalized(),
-				TargetSpeedUnPSec = 0,
-				AccelerationUnPSecSq = settings._180TurnDecelerationUnPSecSq
-			};
-		} else if (turnAngleDg > settings.HarshTurnBeginAngleDg) {
-			float velocityMultiplier = Mathf.Pow(
-				1 - (turnAngleDg - settings.HarshTurnBeginAngleDg) / (settings.HarshTurnMaxAngleDg - settings.HarshTurnBeginAngleDg),
-				settings.HarshTurnVelocityLossFactor
-			);
-			return new HorizontalMovement {
-				TargetDirection = inputDirection,
-				RotationSpeedDegPSec = turnSpeedDgPSec,
-				TargetSpeedUnPSec = currentSpeedUnPSec * velocityMultiplier,
-				AccelerationUnPSecSq = float.PositiveInfinity
-			};
-		}
-		float accelerationUnPSecSq = targetSpeedUnPSec > currentSpeedUnPSec
-			? settings.AccelerationUnPSecSq
-			: settings.DecelerationUnPSecSq;
-		return new HorizontalMovement {
-			TargetDirection = inputDirection,
-			RotationSpeedDegPSec = turnSpeedDgPSec,
-			TargetSpeedUnPSec = targetSpeedUnPSec,
-			AccelerationUnPSecSq = accelerationUnPSecSq
-		};
-	}
-
 	public void ApplyHorizontalMovement(HorizontalMovement movement)
 	{
 		float turnAngleRad = movement.TargetDirection.Length() > 0.01f

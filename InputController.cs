@@ -68,4 +68,9 @@ public class InputController
 		}
 		return this.InputBufferDict[actionName];
 	}
+
+	public Vector2 GetRelativeMovementInput(Viewport viewport)
+		=> this.GetRelativeMovementInput(viewport.GetCamera3D());
+	public Vector2 GetRelativeMovementInput(Node3D camera)
+		=> this.MovementInput.Rotated(camera.Rotation.Y * -1);
 }

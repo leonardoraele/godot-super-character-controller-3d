@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using Raele.SuperCharacter3D.MotionStates;
 
 namespace Raele.SuperCharacter3D;
 
@@ -55,18 +56,11 @@ public partial class WalkControl : HorizontalMotionStateControl
 	/// </summary>
 	[Export] public float _180TurnDecelerationUnPSecSq = 40;
 
-    public override void _Process(double delta)
-    {
-		if (this.State.IsActive && this.StateTransitionWhenOnAir != null && !this.State.Character.IsOnFloor()) {
-			this.State.StateMachine.Transition(this.StateTransitionWhenOnAir.Name);
-		}
-    }
-
-    public override HorizontalMovement GetHorizontalMovement()
+    public override HorizontalMovement GetHorizontalMovement(BaseMotionState state)
 	{
-		Vector2 inputDirection = this.State.Character.InputController.MovementInput
-			.Rotated(this.GetViewport().GetCamera3D().Rotation.Y * -1);
-		float currentSpeedUnPSec = GodotUtil.V3ToHV2(this.State.Character.Velocity).Length();
+		Vector2 inputDirection = state.Character.InputController.MovementInput
+			.Rotated(state.GetViewport().GetCamera3D().Rotation.Y * -1);
+		float currentSpeedUnPSec = GodotUtil.V3ToHV2(state.Character.Velocity).Length();
 		float turnSpeedDgPSec = currentSpeedUnPSec < 0.01f
 			? float.PositiveInfinity
 			: this.TurnSpeedDgPSec
@@ -77,11 +71,11 @@ public partial class WalkControl : HorizontalMotionStateControl
 			);
 		float targetSpeedUnPSec = inputDirection.Length() * this.MaxSpeedUnPSec;
 		float turnAngleDg = targetSpeedUnPSec > 0.01f && currentSpeedUnPSec > 0.01f
-			? Math.Abs(Mathf.RadToDeg(GodotUtil.V3ToHV2(this.State.Character.Velocity).AngleTo(inputDirection)))
+			? Math.Abs(Mathf.RadToDeg(GodotUtil.V3ToHV2(state.Character.Velocity).AngleTo(inputDirection)))
 			: 0;
 		if (turnAngleDg > this.HarshTurnMaxAngleDg) {
 			return new HorizontalMovement {
-				TargetDirection = GodotUtil.V3ToHV2(this.State.Character.Velocity).Normalized(),
+				TargetDirection = GodotUtil.V3ToHV2(state.Character.Velocity).Normalized(),
 				TargetSpeedUnPSec = 0,
 				AccelerationUnPSecSq = this._180TurnDecelerationUnPSecSq
 			};

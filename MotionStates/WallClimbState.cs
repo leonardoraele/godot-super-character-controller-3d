@@ -1,6 +1,6 @@
 namespace Raele.SuperCharacter3D.MotionStates;
 
-public partial class WallClimbState : OnWallState
+public partial class WallClimbState : BaseMotionState
 {
     public override void OnProcessStateActive(float delta)
     {

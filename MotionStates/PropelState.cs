@@ -9,15 +9,9 @@ public partial class PropelState : BaseMotionState
 	[Export] public float InitialVelocityAdditionUnPSec { get; private set; } = 0;
 	[Export] public float MaxSpeedUnPSec { get; private set; } = 10;
 	[Export] public float AccelerationUnPSecSq { get; private set; } = 25;
-	[Export] public float MaxDurationSec { get; private set; } = float.PositiveInfinity;
 	[Export] public bool PropelInputDirection = true;
 	// [Export] public float TurnSpeedDgPSec { get; private set; } = 720; // TODO
 	[Export] public BaseMotionState? VerticalMovementReference;
-
-	[ExportGroup("Exit States")]
-	[Export] public BaseMotionState? StateTransitionWhenOnFloor;
-	[Export] public BaseMotionState? StateTransitionWhenOnWall;
-	[Export] public BaseMotionState? StateTransitionWhenOnAir;
 
     public override void OnEnter(StateTransition transition)
     {
@@ -40,20 +34,6 @@ public partial class PropelState : BaseMotionState
 					* this.InitialVelocityMultiplier
 					+ this.InitialVelocityAdditionUnPSec
 			);
-    }
-
-    public override void OnProcessStateActive(float delta)
-    {
-        base.OnProcessStateActive(delta);
-		if (this.DurationActiveMs > this.MaxDurationSec * 1000) {
-			this.StateMachine.Reset();
-		} else if (this.StateTransitionWhenOnFloor != null && this.Character.IsOnFloor()) {
-			this.StateMachine.Transition(this.StateTransitionWhenOnFloor.Name);
-		} else if (this.StateTransitionWhenOnWall != null && this.Character.IsOnWall()) {
-			this.StateMachine.Transition(this.StateTransitionWhenOnWall.Name);
-		} else if (this.StateTransitionWhenOnAir != null && !this.Character.IsOnFloor()) {
-			this.StateMachine.Transition(this.StateTransitionWhenOnAir.Name);
-		}
     }
 
 	public override HorizontalMovement GetHorizontalMovement()

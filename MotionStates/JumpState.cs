@@ -8,6 +8,7 @@ public partial class JumpState : BaseMotionState
 	[Export] public float JumpHeightUn { get; private set; } = 3.5f;
 	[Export] public float JumpDurationMs { get; private set; } = 500;
 	[Export] public Curve? JumpHeightCurve;
+    [Export] public Node? StateTransitionOnJumpApex;
 
     [ExportGroup("Air Control")]
     [Export] public BaseMotionState? HorizontalMovementReference;
@@ -28,7 +29,7 @@ public partial class JumpState : BaseMotionState
                 || Time.GetTicksMsec() >= this.HitCeilingTimestamp + this.Character.Settings.CeilingSlideTimeMs
             )
         ) {
-            this.Character.StateMachine.Transition<FallState>();
+            this.Character.StateMachine.Transition(this.StateTransitionOnJumpApex?.Name ?? nameof(FallState));
         }
         // else if (this.DurationActiveMs >= this.Settings.MinJumpDurationMs
         //     && !Input.IsActionPressed(this.Character.Settings.Input.JumpAction)
@@ -41,6 +42,7 @@ public partial class JumpState : BaseMotionState
     {
         // Apply horizontal velocity
         HorizontalMovement hMovement = this.HorizontalMovementReference?.GetHorizontalMovement() ?? new();
+        GD.PrintS(hMovement);
         hMovement.TargetSpeedUnPSec *= this.AerialSpeedMultiplier;
         hMovement.AccelerationUnPSecSq *= this.AerialAccelerationMultiplier;
         hMovement.RotationSpeedDegPSec *= this.AerialRotationSpeedMultiplier;

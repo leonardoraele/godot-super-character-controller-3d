@@ -4,11 +4,19 @@ namespace Raele.SuperCharacter3D.MotionStates;
 
 public abstract partial class BaseMotionState : Node, IMotionState
 {
-	[ExportGroup("Abilities")]
+	[ExportGroup("Ability")]
 	[Export] public Godot.Collections.Array<AbilityData>? RechargedAbilitiesOnEnter;
 	[ExportGroup("Collision Shape")]
 	[Export] public CollisionShape3D? ActiveCollisionShape;
 	[Export] public bool DisableSiblingCollisionShapes;
+	[ExportCategory("Exit States")]
+	[Export] public float MaxDurationSec = float.PositiveInfinity;
+	[Export] public Node? StateTransitionWhenMaxDurationReached;
+	[Export] public Node? StateTransitionWhenOnFloor;
+	[Export] public Node? StateTransitionWhenNotOnFloor;
+	[Export] public Node? StateTransitionWhenOnWall;
+	[Export] public Node? StateTransitionWhenNotOnWall;
+
 
     public SuperCharacter3DController Character => this.StateMachine.Character;
 	public MotionStateMachine StateMachine { get; private set; } = null!;
@@ -50,7 +58,10 @@ public abstract partial class BaseMotionState : Node, IMotionState
 		}
 	}
 	public virtual void OnExit(StateTransition transition) {}
-	public virtual void OnProcessStateActive(float delta) {}
+	public virtual void OnProcessStateActive(float delta)
+	{
+		this.CheckExitTransitions();
+	}
 	public virtual void OnPhysicsProcessStateActive(float delta)
 	{
 		// if (this.HorizontalControl != null) this.Character.ApplyHorizontalMovement(this.HorizontalControl.GetHorizontalMovement());
@@ -59,6 +70,25 @@ public abstract partial class BaseMotionState : Node, IMotionState
 		this.Character.ApplyHorizontalMovement(this.GetHorizontalMovement());
 		this.Character.ApplyVerticalMovement(this.GetVerticalMovement());
 		this.Character.MoveAndSlide();
+	}
+
+	private void CheckExitTransitions()
+	{
+		if (this.DurationActiveMs >= this.MaxDurationSec * 1000) {
+			if (this.StateTransitionWhenMaxDurationReached != null) {
+				this.StateMachine.Transition(this.StateTransitionWhenMaxDurationReached.Name);
+			} else {
+				this.StateMachine.Reset();
+			}
+		} else if (this.StateTransitionWhenOnFloor != null && this.Character.IsOnFloor()) {
+			this.StateMachine.Transition(this.StateTransitionWhenOnFloor.Name);
+		} else if (this.StateTransitionWhenOnWall != null && this.Character.IsOnWall()) {
+			this.StateMachine.Transition(this.StateTransitionWhenOnWall.Name);
+		} else if (this.StateTransitionWhenNotOnFloor != null && !this.Character.IsOnFloor()) {
+			this.StateMachine.Transition(this.StateTransitionWhenNotOnFloor.Name);
+		} else if (this.StateTransitionWhenNotOnWall != null && !this.Character.IsOnWall()) {
+			this.StateMachine.Transition(this.StateTransitionWhenNotOnWall.Name);
+		}
 	}
 
 	public virtual void Transition()
