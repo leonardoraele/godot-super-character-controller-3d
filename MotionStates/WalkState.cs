@@ -84,7 +84,7 @@ public partial class WalkState : BaseMotionState
 
     public override HorizontalMovement GetHorizontalMovement()
 	{
-		Vector2 inputDirection = this.Character.InputController.GetRelativeMovementInput(this.Character.GetViewport());
+		Vector2 inputDirection = this.Character.InputController.GetRelativeMovementInput();
 		float currentSpeedUnPSec = GodotUtil.V3ToHV2(this.Character.Velocity).Length();
 		float turnSpeedDgPSec = currentSpeedUnPSec < 0.01f
 			? float.PositiveInfinity

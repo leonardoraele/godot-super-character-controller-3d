@@ -21,7 +21,7 @@ public abstract partial class BaseMotionState : Node, IMotionState
     public SuperCharacter3DController Character => this.StateMachine.Character;
 	public MotionStateMachine StateMachine { get; private set; } = null!;
 	public bool IsActive => this.StateMachine.CurrentState == this;
-	public bool IsLastActiveState => this.StateMachine.PreviousState == this;
+	public bool IsPreviousActiveState => this.StateMachine.PreviousState == this;
 
 	public ulong DurationActiveMs => this.Character.StateMachine.TimeSinceLastStateChangeMs;
 

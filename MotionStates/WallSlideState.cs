@@ -8,7 +8,7 @@ public partial class WallSlideState : BaseMotionState
 	[Export] public float MaxDownwardSpeedPSec = 2.5f;
 	[Export] public float DownwardAccelerationUnPSecSq = 1.5f;
     [Export] public bool CancelDownwardMomentumOnEnter = false;
-    [Export] public WallStateUtil.FacingDirectionMode FacingDirection = WallStateUtil.FacingDirectionMode.Preserve;
+    [Export] public WallStateUtil.FacingDirectionMode FacingDirection = WallStateUtil.FacingDirectionMode.AwayFromWall;
 
     [ExportGroup("Wall Drop")]
     [Export] public float WallDropMinInputAngleDeg = 90f;
@@ -26,7 +26,7 @@ public partial class WallSlideState : BaseMotionState
         ? this.WallDropPreventionLeniencyMs < 0
         : Math.Abs(
                 GodotUtil.V3ToHV2(this.Character.GetWallNormal())
-                    .AngleTo(this.Character.InputController.GetRelativeMovementInput(this.GetViewport()))
+                    .AngleTo(this.Character.InputController.GetRelativeMovementInput())
             )
             < Mathf.DegToRad(this.WallDropMinInputAngleDeg);
 

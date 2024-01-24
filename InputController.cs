@@ -41,6 +41,7 @@ public class InputController
 
 	public interface ISuperPlatformer3DCharacter {
 		public SuperCharacter3DSettings Settings { get; }
+		public Viewport GetViewport();
 	}
 
 	public InputController(ISuperPlatformer3DCharacter character)
@@ -69,8 +70,9 @@ public class InputController
 		return this.InputBufferDict[actionName];
 	}
 
-	public Vector2 GetRelativeMovementInput(Viewport viewport)
-		=> this.GetRelativeMovementInput(viewport.GetCamera3D());
-	public Vector2 GetRelativeMovementInput(Node3D camera)
-		=> this.MovementInput.Rotated(camera.Rotation.Y * -1);
+	/// <summary>
+	/// Returns the movement input relative to the camera's perspective.
+	/// </summary>
+	public Vector2 GetRelativeMovementInput()
+		=> this.MovementInput.Rotated(this.Character.GetViewport().GetCamera3D().Rotation.Y * -1);
 }

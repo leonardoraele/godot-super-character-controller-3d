@@ -5,16 +5,21 @@ namespace Raele.SuperCharacter3D;
 
 public partial class InputActionAbility : Node
 {
+	[Export] public BaseMotionState? OnActivated;
+
+	[ExportGroup("Activation Conditions")]
 	/// <summary>
 	/// Name of the input action to be read for this ability.
 	/// </summary>
-	[Export] public string ActionName = "";
-	[Export] public AbilityActivationMode ActivationInputMode = AbilityActivationMode.InputIsJustPressed;
+	[Export] public string InputActionName = "";
+	[Export] public AbilityActivationMode InputMode = AbilityActivationMode.InputIsJustPressed;
+	[Export] public float EnabledFromTimeSec = 0f;
+	[Export] public float DisabledAfterTimeSec = float.PositiveInfinity;
+	[Export] public BaseMotionState? PreviousState;
 	/// <summary>
 	/// Time in milliseconds to buffer input for this ability. Set to 0 to disable input buffering for this ability.
 	/// </summary>
 	[Export] public ulong InputBufferTimeMs = 150;
-	[Export] public BaseMotionState? OnActivated;
 	[Export] public AbilityData? AbilityData;
 
 	[ExportGroup("Ability Canceling")]
@@ -75,25 +80,31 @@ public partial class InputActionAbility : Node
 		if (
 			this.State.IsActive
 			&& this.AbilityData?.IsAvailable != false
+			&& this.State.DurationActiveMs >= this.EnabledFromTimeSec * 1000
+			&& this.State.DurationActiveMs < this.DisabledAfterTimeSec * 1000
 			&& (
-				this.ActivationInputMode == AbilityActivationMode.InputIsPressed
-				&& !string.IsNullOrEmpty(this.ActionName)
-				&& Input.IsActionPressed(this.ActionName)
-				|| this.ActivationInputMode == AbilityActivationMode.InputIsJustPressed
-				&& this.State.StateMachine.Character.InputController.GetInputBuffer(this.ActionName).ConsumeInput()
+				this.PreviousState == null
+				|| this.State.StateMachine.PreviousState?.Name == this.PreviousState.Name
+			)
+			&& (
+				this.InputMode == AbilityActivationMode.InputIsPressed
+				&& !string.IsNullOrEmpty(this.InputActionName)
+				&& Input.IsActionPressed(this.InputActionName)
+				|| this.InputMode == AbilityActivationMode.InputIsJustPressed
+				&& this.State.StateMachine.Character.InputController.GetInputBuffer(this.InputActionName).ConsumeInput()
 			)
 		) {
-			if (this.OnActivated != null) {
+			if (this.OnActivated == null) {
+				GD.PushError("Failed to activate ability. Ability node: ", this.Name, ". Cause: ", nameof(this.OnActivated)," state node is not set.");
+			} else {
 				if (this.AbilityData != null) {
 					this.AbilityData.UseCount++;
 				}
 				GD.PrintS(Time.GetTicksMsec(), nameof(InputActionAbility), ":", "⚡", this.Name, "activated.");
 				this.State.StateMachine.Transition(this.OnActivated.Name);
-			} else {
-				GD.PushError("Failed to activate ability. Ability node: ", this.Name, ". Cause: ", nameof(this.OnActivated)," state node is not set.");
 			}
 		} else if (
-			this.State.IsLastActiveState
+			this.State.IsPreviousActiveState
 			&& this.State.StateMachine.CurrentState?.Name == this.OnActivated?.Name
 		) {
 			if (this.AbilityData != null) {
@@ -102,11 +113,11 @@ public partial class InputActionAbility : Node
 			if (
 				this.AbilityData?.TimeLimitExceeded == true
 				|| this.CancelingInputMode == AbilityCancelingMode.OnRelease
-				&& !string.IsNullOrEmpty(this.ActionName)
-				&& !Input.IsActionPressed(this.ActionName)
+				&& !string.IsNullOrEmpty(this.InputActionName)
+				&& !Input.IsActionPressed(this.InputActionName)
 				|| this.CancelingInputMode == AbilityCancelingMode.OnToggle
-				&& this.State.StateMachine.Character.InputController.GetInputBuffer(this.ActionName).ConsumeInput()
-			) {  
+				&& this.State.StateMachine.Character.InputController.GetInputBuffer(this.InputActionName).ConsumeInput()
+			) {
 				if (this.AbilityData?.TimeLimitExceeded == true) {
 					GD.PrintS(Time.GetTicksMsec(), nameof(InputActionAbility), ":", "⛔", this.Name, "time limit exceeded.");
 				} else {
