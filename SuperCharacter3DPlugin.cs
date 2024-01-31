@@ -17,23 +17,17 @@ public partial class SuperCharacter3DPlugin : EditorPlugin
         this.AddCustomType(nameof(MotionStateMachine), nameof(Node), stateMachine, icon);
         this.AddCustomType(nameof(Debug.SuperCharacter3DDebugPanel), nameof(ColorRect), debugPanel, icon);
 
-        this.AddCustomType(
-            nameof(InputActionAbility),
-            nameof(Node),
-            GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/Abilities/{nameof(InputActionAbility)}.cs"),
-            icon
-        );
-
         // Motion state nodes
         string[] states = new string[] {
-            nameof(CrouchState),
-            nameof(FallState),
-            nameof(InteractingState),
-            nameof(JumpState),
-            nameof(WalkState),
-            nameof(WallClimbState),
-            nameof(WallSlideState),
-            nameof(PropelState),
+            // nameof(CrouchState),
+            // nameof(FallState),
+            // nameof(InteractingState),
+            // nameof(JumpState),
+            // nameof(WalkState),
+            // nameof(WallClimbState),
+            // nameof(WallSlideState),
+            // nameof(PropelState),
+            nameof(ControlledState),
         };
         foreach (string stateName in states) {
             Script script = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(MotionStates)}/{stateName}.cs");

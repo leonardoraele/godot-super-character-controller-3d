@@ -11,7 +11,7 @@ public partial class InteractingState : BaseMotionState
 	public bool Ended { get; private set; } = false;
 	private bool IsDue => this.DurationActiveMs >= this.DurationSec * 1000;
 
-    public override void OnEnter(StateTransition transition)
+    public override void OnEnter(MotionStateTransition transition)
     {
         base.OnEnter(transition);
         Dictionary<string, Variant>? dict = transition.Data?.AsGodotDictionary<string, Variant>();

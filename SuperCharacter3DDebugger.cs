@@ -6,10 +6,14 @@ namespace Raele.SuperCharacter3D;
 public partial class SuperCharacter3DDebugger : Node
 {
 	[Export] private float ShadowDurationSec = 6;
+	[ExportGroup("Input Actions")]
+	[Export] private string InputActionPause = "debug_pause";
+	[Export] private string InputActionStep = "debug_step";
 
 	private SuperCharacter3DController Character = null!;
+    private int ProcessFrames = -1;
 
-	public override void _Ready()
+    public override void _Ready()
 	{
 		if (!(this.GetParent() is SuperCharacter3DController character)) {
 			GD.PushWarning(nameof(SuperCharacter3DDebugger), "must be a child of", nameof(SuperCharacter3DController));
@@ -58,16 +62,22 @@ public partial class SuperCharacter3DDebugger : Node
 		}
 	}
 
-    public override void _Input(InputEvent @event)
+    public override void _Process(double delta)
     {
-        base._UnhandledInput(@event);
-		if (@event is InputEventKey key && key.Pressed && key.Keycode == Key.Pause) {
-			this.ProcessMode = ProcessModeEnum.Always;
-			if (this.GetViewport().ProcessMode == ProcessModeEnum.Disabled) {
-				this.GetViewport().ProcessMode = ProcessModeEnum.Always;
-			} else {
-				this.GetViewport().ProcessMode = ProcessModeEnum.Disabled;
+        base._Process(delta);
+		this.ProcessMode = ProcessModeEnum.Always;
+		if (this.ProcessFrames == 0) {
+			this.GetViewport().ProcessMode = ProcessModeEnum.Disabled;
+		} else {
+			this.GetViewport().ProcessMode = ProcessModeEnum.Always;
+			if (this.ProcessFrames > 0) {
+				this.ProcessFrames--;
 			}
+		}
+		if (InputMap.HasAction(this.InputActionPause) && Input.IsActionJustPressed(this.InputActionPause)) {
+			this.ProcessFrames = this.ProcessFrames >= 0 ? -1 : 0;
+		} else if (InputMap.HasAction(this.InputActionStep) && Input.IsActionJustPressed(this.InputActionStep)) {
+			this.ProcessFrames = 1;
 		}
     }
 }

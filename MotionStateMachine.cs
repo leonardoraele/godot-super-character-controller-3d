@@ -9,7 +9,7 @@ public partial class MotionStateMachine : Node
 	public SuperCharacter3DController Character { get; private set; } = null!;
 	public IMotionState? CurrentState { get; private set; }
     public IMotionState? PreviousState { get; private set; }
-	public StateTransition? QueuedTransition;
+	public MotionStateTransition? QueuedTransition;
 	private ulong LastStateChangeTimestamp;
 
     public ulong TimeSinceLastStateChangeMs => Time.GetTicksMsec() - this.LastStateChangeTimestamp;
@@ -56,7 +56,7 @@ public partial class MotionStateMachine : Node
 	public void Transition(string nextStateName, Variant? data = null)
 	{
 		this.QueuedTransition?.Cancel();
-		this.QueuedTransition = new StateTransition() {
+		this.QueuedTransition = new MotionStateTransition() {
 			Data = data,
 			PreviousStateName = this.CurrentState?.Name,
 			NextStateName = nextStateName,
@@ -75,7 +75,7 @@ public partial class MotionStateMachine : Node
 			return;
 		}
 
-		StateTransition currentTransition = this.QueuedTransition;
+		MotionStateTransition currentTransition = this.QueuedTransition;
 
 		// Exit current state
 		{

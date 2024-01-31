@@ -58,4 +58,14 @@ public static class GodotUtil {
 	{
 		return new Vector3(v.X, 0, v.Y);
 	}
+
+    public static T GetClosestParentOrThrow<T>(Node node) where T : Node
+    {
+		for (Node? parent = node.GetParent(); parent != null; parent = parent.GetParent()) {
+			if (parent is T parentT) {
+				return parentT;
+			}
+		}
+		throw new Exception($"Failed to find parent of type {typeof(T).Name} for node \"{node.Name}\".");
+    }
 }

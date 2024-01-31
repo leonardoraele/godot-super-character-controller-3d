@@ -20,7 +20,7 @@ public partial class WallClimbState : BaseMotionState
 	[Export] BaseMotionState? StateTransitionWhenOnBottomEdge;
 	[Export] BaseMotionState? StateTransitionWhenOnSideEdge;
 
-    public override void OnEnter(StateTransition transition)
+    public override void OnEnter(MotionStateTransition transition)
     {
         base.OnEnter(transition);
         // this.Character.Rotation = Vector3.Up
@@ -33,7 +33,7 @@ public partial class WallClimbState : BaseMotionState
 		if (this.BottomRightRayCast != null) this.BottomRightRayCast.Enabled = true;
     }
 
-    public override void OnExit(StateTransition transition)
+    public override void OnExit(MotionStateTransition transition)
     {
 		base.OnExit(transition);
 		if (!transition.Canceled) {

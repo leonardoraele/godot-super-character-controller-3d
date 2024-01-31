@@ -16,7 +16,7 @@ public partial class CrouchState : WalkState
             )
             == null;
 
-    public override void OnExit(StateTransition transition)
+    public override void OnExit(MotionStateTransition transition)
     {
         if (!this.CanStandUp) {
             transition.Cancel();

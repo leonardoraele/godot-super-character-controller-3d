@@ -30,7 +30,7 @@ public partial class WallSlideState : BaseMotionState
             )
             < Mathf.DegToRad(this.WallDropMinInputAngleDeg);
 
-    public override void OnEnter(StateTransition transition)
+    public override void OnEnter(MotionStateTransition transition)
     {
         base.OnEnter(transition);
         if (transition.Canceled) {

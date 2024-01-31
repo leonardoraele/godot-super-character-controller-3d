@@ -3,7 +3,7 @@ using Godot;
 
 namespace Raele.SuperCharacter3D;
 
-public class StateTransition {
+public class MotionStateTransition {
 	public string? PreviousStateName { get; init; }
 	public string NextStateName { get; init; } = "";
 	public Variant? Data { get; init; }
@@ -13,7 +13,7 @@ public class StateTransition {
 		this.Canceled = true;
 		this.CanceledEvent?.Invoke();
 	}
-	public StateTransition Chain(StateTransition other) {
+	public MotionStateTransition Chain(MotionStateTransition other) {
 		other.CanceledEvent += this.Cancel;
 		return other;
 	}

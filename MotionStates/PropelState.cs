@@ -13,7 +13,7 @@ public partial class PropelState : BaseMotionState
 	// [Export] public float TurnSpeedDgPSec { get; private set; } = 720; // TODO
 	[Export] public BaseMotionState? VerticalMovementReference;
 
-    public override void OnEnter(StateTransition transition)
+    public override void OnEnter(MotionStateTransition transition)
     {
         base.OnEnter(transition);
 

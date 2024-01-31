@@ -8,11 +8,11 @@ public interface IMotionState {
     /// <summary>
     /// Called when this becomes the active state.
     /// </summary>
-	public void OnEnter(StateTransition transition);
+	public void OnEnter(MotionStateTransition transition);
 	/// <summary>
 	/// Called when this is cases to be the active state.
 	/// </summary>
-	public void OnExit(StateTransition transition);
+	public void OnExit(MotionStateTransition transition);
 	/// <summary>
 	/// Called every frame (on _Process) while this state is active.
 	/// Not called if this is not the activestate.

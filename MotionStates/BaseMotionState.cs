@@ -17,12 +17,10 @@ public abstract partial class BaseMotionState : Node, IMotionState
 	[Export] public Node? StateTransitionWhenOnWall;
 	[Export] public Node? StateTransitionWhenNotOnWall;
 
-
     public SuperCharacter3DController Character => this.StateMachine.Character;
 	public MotionStateMachine StateMachine { get; private set; } = null!;
 	public bool IsActive => this.StateMachine.CurrentState == this;
 	public bool IsPreviousActiveState => this.StateMachine.PreviousState == this;
-
 	public ulong DurationActiveMs => this.Character.StateMachine.TimeSinceLastStateChangeMs;
 
     [Signal] public delegate void EnterEventHandler();
@@ -39,7 +37,7 @@ public abstract partial class BaseMotionState : Node, IMotionState
 		}
 	}
 
-    public virtual void OnEnter(StateTransition transition)
+    public virtual void OnEnter(MotionStateTransition transition)
 	{
 		if (this.DisableSiblingCollisionShapes) {
 			foreach (Node? child in this.ActiveCollisionShape?.GetParent()?.GetChildren() ?? new()) {
@@ -57,7 +55,7 @@ public abstract partial class BaseMotionState : Node, IMotionState
 			this.ActiveCollisionShape.Disabled = false;
 		}
 	}
-	public virtual void OnExit(StateTransition transition) {}
+	public virtual void OnExit(MotionStateTransition transition) {}
 	public virtual void OnProcessStateActive(float delta)
 	{
 		this.CheckExitTransitions();
