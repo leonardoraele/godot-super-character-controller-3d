@@ -71,6 +71,5 @@ public partial class ControlledState : Node, IMotionState
 				control.OnPhysicsProcessStateActive(this, delta);
 			}
 		}
-		this.Character.MoveAndSlide();
     }
 }

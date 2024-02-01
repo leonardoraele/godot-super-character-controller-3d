@@ -38,8 +38,8 @@ public partial class PropelState : BaseMotionState
 
 	public override HorizontalMovement GetHorizontalMovement()
 		=> new() {
-			TargetSpeedUnPSec = this.MaxSpeedUnPSec,
-			AccelerationUnPSecSq = this.AccelerationUnPSecSq,
+			TargetForwardSpeedUnPSec = this.MaxSpeedUnPSec,
+			ForwardAccelerationUnPSecSq = this.AccelerationUnPSecSq,
 			TargetDirection = GodotUtil.V3ToHV2(this.Character.Basis.Z * -1),
 		};
 

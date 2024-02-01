@@ -42,8 +42,8 @@ public partial class JumpState : BaseMotionState
     {
         // Apply horizontal velocity
         HorizontalMovement hMovement = this.HorizontalMovementReference?.GetHorizontalMovement() ?? new();
-        hMovement.TargetSpeedUnPSec *= this.AerialSpeedMultiplier;
-        hMovement.AccelerationUnPSecSq *= this.AerialAccelerationMultiplier;
+        hMovement.TargetForwardSpeedUnPSec *= this.AerialSpeedMultiplier;
+        hMovement.ForwardAccelerationUnPSecSq *= this.AerialAccelerationMultiplier;
         hMovement.RotationSpeedDegPSec *= this.AerialRotationSpeedMultiplier;
         this.Character.ApplyHorizontalMovement(hMovement);
 

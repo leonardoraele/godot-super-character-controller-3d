@@ -101,8 +101,8 @@ public partial class WalkState : BaseMotionState
 		if (turnAngleDg > this.HarshTurnMaxAngleDg) {
 			return new HorizontalMovement {
 				TargetDirection = GodotUtil.V3ToHV2(this.Character.Velocity).Normalized(),
-				TargetSpeedUnPSec = 0,
-				AccelerationUnPSecSq = this._180TurnDecelerationUnPSecSq
+				TargetForwardSpeedUnPSec = 0,
+				ForwardAccelerationUnPSecSq = this._180TurnDecelerationUnPSecSq
 			};
 		} else if (turnAngleDg > this.HarshTurnBeginAngleDg) {
 			float velocityMultiplier = Mathf.Pow(
@@ -112,8 +112,8 @@ public partial class WalkState : BaseMotionState
 			return new HorizontalMovement {
 				TargetDirection = inputDirection,
 				RotationSpeedDegPSec = turnSpeedDgPSec,
-				TargetSpeedUnPSec = currentSpeedUnPSec * velocityMultiplier,
-				AccelerationUnPSecSq = float.PositiveInfinity
+				TargetForwardSpeedUnPSec = currentSpeedUnPSec * velocityMultiplier,
+				ForwardAccelerationUnPSecSq = float.PositiveInfinity
 			};
 		}
 		float accelerationUnPSecSq = targetSpeedUnPSec > currentSpeedUnPSec
@@ -122,8 +122,8 @@ public partial class WalkState : BaseMotionState
 		return new HorizontalMovement {
 			TargetDirection = inputDirection,
 			RotationSpeedDegPSec = turnSpeedDgPSec,
-			TargetSpeedUnPSec = targetSpeedUnPSec,
-			AccelerationUnPSecSq = accelerationUnPSecSq
+			TargetForwardSpeedUnPSec = targetSpeedUnPSec,
+			ForwardAccelerationUnPSecSq = accelerationUnPSecSq
 		};
 	}
 

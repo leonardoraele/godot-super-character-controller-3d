@@ -8,16 +8,29 @@ namespace Raele.SuperCharacter3D.MotionStateControllers;
 public partial class CollisionShapeEnabler : MotionStateController
 {
 	// TODO When MotionStateControllers are refactored to nodes, this should become a reference to a CollisionShape3D
-	// TODO Should be an array, because if the user needs to enable multiple shapes, they can't add multiple
-	// CollisionShapeEnabler controllers since, when the mode is set to CollisionShapeEnablingMode.DisableOtherShapes,
-	// it overrides the other shapes.
 	[Export] public string? CollisionShape;
 	[Export] public CollisionShapeEnablingMode Mode = CollisionShapeEnablingMode.DisableOtherShapes;
+
+	[ExportGroup("Space Check")]
 	[Export] public SpaceLackingBehavior OnSpaceLacking = SpaceLackingBehavior.Ignore;
+	/// <summary>
+	/// This is the margin for the physics space query used to check for available space before enabling new collision
+	/// shapes. This is an extra value added to the shape's margin.
+	///
+	/// Set it to a negative value to create some tolerance for the space check. This is useful when you want to enable
+	/// a shape that is just barely touching another shape. For example, if you want to enable a collision shape for
+	/// when a character is crouching, you might want to set this to a negative value to allow the shape to be enabled
+	/// when it's already touching the ground. Otherwise the controller will behave as if there's not enough space for
+	/// the new shape to be enabled. If <see cref="OnSpaceLacking"/> is set to
+	/// <see cref="SpaceLackingBehavior.Ignore"/>, no space check is performed, so this property is not used.
+	/// </summary>
+	[Export] public float SpaceQueryMarginOffset = -0.08f;
 
     private List<uint> AffectedShapeOwners = new();
 
     public enum CollisionShapeEnablingMode {
+		// TODO // FIXME This option breaks when there are multiple CollisionShapeEnables in the same state, because
+		// they override each other.
 		DisableOtherShapes,
 		KeepOtherShapes,
 	}
@@ -96,16 +109,19 @@ public partial class CollisionShapeEnabler : MotionStateController
         Godot.Collections.Array<Vector3> collisions = character.GetWorld3D()
 			.DirectSpaceState
 			.CollideShape(new() {
+				Margin = shape.Margin + this.SpaceQueryMarginOffset,
 				Transform = character.Transform * transform,
 				Shape = shape,
 				CollisionMask = character.CollisionMask,
 				Exclude = new Godot.Collections.Array<Rid>() { character.GetRid() },
 			});
-		for (int i = 0; i < collisions.Count; i += 2) {
-			if (collisions[i].DistanceSquaredTo(collisions[i + 1]) > 0.0001f) {
-				return false;
-			}
-		}
-		return true;
+		return collisions.Count == 0;
+		// This might be needed if margins are not enough to prevent false positives
+		// for (int i = 0; i < collisions.Count; i += 2) {
+		// 	if (collisions[i].DistanceSquaredTo(collisions[i + 1]) > 0.0001f) {
+		// 		return false;
+		// 	}
+		// }
+		// return true;
 	}
 }

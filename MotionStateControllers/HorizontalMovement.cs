@@ -27,7 +27,7 @@ public partial class HorizontalMovement : MotionStateController
 	///
 	/// If you set this to a negative value, the player will rotate in the opposite direction of the input.
 	/// </summary>
-	[Export] public float TurnSpeedDgPSec = float.PositiveInfinity;
+	[Export] public float TurnSpeedDegPSec = 720;
 	/// <summary>
 	/// Curve that modifies the turn speed based on the current speed of the character. Use this to make the character
 	/// turn faster or slower depending on their speed.
@@ -37,12 +37,12 @@ public partial class HorizontalMovement : MotionStateController
 	/// is moving at their maximum speed. The Y axis represents the multiplier to apply to the turn speed. Y values
 	/// higher than 1 make the character turn faster and lower than 1 makes the character turn slower. If Y is 0, the
 	/// character can't turn. For example, if Y = 0.5 at X = 1, the character will turn at half their normal
-	/// turn speed (as determined by <see cref="TurnSpeedDgPSec"/>) when moving at their max speed (as determined
+	/// turn speed (as determined by <see cref="TurnSpeedDegPSec"/>) when moving at their max speed (as determined
 	/// by <see cref="MaxSpeedUnPSec"/>).
 	///
 	/// If this property not set, the turn speed is constant at all speed values.
 	///
-	/// Note that, if <see cref="TurnSpeedDgPSec"/> is set to Infinity (the default), this property has no effect.
+	/// Note that, if <see cref="TurnSpeedDegPSec"/> is set to Infinity (the default), this property has no effect.
 	/// </summary>
 	[Export] public Curve TurnSpeedModifier = null!;
 
@@ -57,18 +57,42 @@ public partial class HorizontalMovement : MotionStateController
 	/// and even then, it is important to animate the character properly to convey the sense of a thigh turn. If done
 	/// correctly, it improves the sense of weight of the character.
 	/// </summary>
-	[Export(PropertyHint.Range, "0,180,15")] public float HarshTurnBeginAngleDg = 120;
+	[Export(PropertyHint.Range, "0,180,15")] public float HarshTurnBeginAngleDeg = 120;
 	/// <summary>
 	/// Turn angle at which the character will lose all velocity to turn.
 	/// Set to 360 to disable.
 	/// </summary>
-	[Export(PropertyHint.Range, "0,180,15")] public float HarshTurnMaxAngleDg = 150;
+	[Export(PropertyHint.Range, "0,180,15")] public float HarshTurnMaxAngleDeg = 150f;
 	/// <summary>
 	/// Factor by which the character will lose velocity when turning. This is a power expoent on top of the proportion
-	/// of the turn angle between <see cref="HarshTurnBeginAngleDg"/> and <see cref="HarshTurnMaxAngleDg"/>.
+	/// of the turn angle between <see cref="HarshTurnBeginAngleDeg"/> and <see cref="HarshTurnMaxAngleDeg"/>.
 	/// Values higher than 1 will make the character lose more velocity with greater turn angles.
 	/// </summary>
 	[Export(PropertyHint.ExpEasing)] public float HarshTurnVelocityLossFactor = 1f;
+
+	[ExportGroup("Debug")]
+	[Export(PropertyHint.Flags, "Draw Velocity:1,Draw Input:2")] public int DebugDrawFlags;
+
+	private float HarshTurnMaxAngleRad {
+		get => Mathf.DegToRad(this.HarshTurnMaxAngleDeg);
+		set => this.HarshTurnMaxAngleDeg = Mathf.RadToDeg(value);
+	}
+	private float HarshTurnBeginAngleRad {
+		get => Mathf.DegToRad(this.HarshTurnBeginAngleDeg);
+		set => this.HarshTurnBeginAngleDeg = Mathf.RadToDeg(value);
+	}
+	public float TurnSpeedRadPSec {
+		get => Mathf.DegToRad(this.TurnSpeedDegPSec);
+		set => this.TurnSpeedDegPSec = Mathf.RadToDeg(value);
+	}
+
+	public enum MovementModeEnum {
+		DirectionalMovement = 1,
+		DirectionalRotation = 2,
+		SidewayStrafe = 4,
+		ForwardAndBack = 8,
+		TurnAround = 16,
+	}
 
 	public enum InitialFacingDirectionEnum {
 		NoChange,
@@ -101,49 +125,53 @@ public partial class HorizontalMovement : MotionStateController
 
     public override void OnPhysicsProcessStateActive(ControlledState state, float delta)
 	{
-		Vector2 inputDirection = state.Character.InputController.MovementInput
-			.Rotated(state.GetViewport().GetCamera3D().Rotation.Y * -1);
-		float currentSpeedUnPSec = GodotUtil.V3ToHV2(state.Character.Velocity).Length();
-		float turnSpeedDgPSec = currentSpeedUnPSec < 0.01f
-			? float.PositiveInfinity
-			: this.TurnSpeedDgPSec
-			* (
-				// Avoid multiplying by Infinity because it might result in NaN if the multiplier is 0.
-				!float.IsInfinity(this.TurnSpeedDgPSec) && this.MaxSpeedUnPSec != 0 && this.TurnSpeedModifier != null
-					? this.TurnSpeedModifier.Sample(Mathf.Min(1, currentSpeedUnPSec / this.MaxSpeedUnPSec))
-					: 1
-			);
-		float targetSpeedUnPSec = inputDirection.Length() * this.MaxSpeedUnPSec;
-		float turnAngleDg = targetSpeedUnPSec > 0.01f && currentSpeedUnPSec > 0.01f
-			? Math.Abs(Mathf.RadToDeg(GodotUtil.V3ToHV2(state.Character.Velocity).AngleTo(inputDirection)))
+		if ((this.DebugDrawFlags & 2) != 0) {
+			DebugDraw3D.DrawArrow(state.Character.GlobalPosition, state.Character.GlobalPosition + state.Character.InputController.GlobalMovementInput, Colors.Green);
+		}
+		float turnAngleRad = state.Character.InputController.GlobalMovementInput.LengthSquared() > Mathf.Epsilon
+			&& state.Character.Velocity.LengthSquared() > Mathf.Epsilon
+			? state.Character.InputController.GlobalMovementInput.AngleTo(state.Character.Velocity)
 			: 0;
-		if (turnAngleDg > this.HarshTurnMaxAngleDg) {
-			state.Character.ApplyHorizontalMovement(new() {
-				TargetDirection = GodotUtil.V3ToHV2(state.Character.Velocity).Normalized(),
-				TargetSpeedUnPSec = 0,
-				AccelerationUnPSecSq = this.BreakDecelerationUnPSecSq
-			});
-		} else if (turnAngleDg > this.HarshTurnBeginAngleDg) {
-			float velocityMultiplier = Mathf.Pow(
-				1 - (turnAngleDg - this.HarshTurnBeginAngleDg) / (this.HarshTurnMaxAngleDg - this.HarshTurnBeginAngleDg),
-				this.HarshTurnVelocityLossFactor
+		if (turnAngleRad > this.HarshTurnMaxAngleRad) {
+			state.Character.ForwardSpeed = Mathf.MoveToward(
+				state.Character.ForwardSpeed,
+				0,
+				this.BreakDecelerationUnPSecSq * delta
 			);
-			state.Character.ApplyHorizontalMovement(new() {
-				TargetDirection = inputDirection,
-				RotationSpeedDegPSec = turnSpeedDgPSec,
-				TargetSpeedUnPSec = currentSpeedUnPSec * velocityMultiplier,
-				AccelerationUnPSecSq = float.PositiveInfinity
-			});
 		} else {
-			float accelerationUnPSecSq = targetSpeedUnPSec >= currentSpeedUnPSec ? this.AccelerationUnPSecSq
+			float turnSpeedRadPSec = Math.Abs(state.Character.ForwardSpeed) <= Mathf.Epsilon
+				? float.PositiveInfinity
+				: this.TurnSpeedRadPSec
+				* (
+					// Avoid multiplying by Infinity because it might result in NaN if the multiplier is 0.
+					!float.IsInfinity(this.TurnSpeedRadPSec) && this.MaxSpeedUnPSec != 0 && this.TurnSpeedModifier != null
+						? this.TurnSpeedModifier.Sample(Mathf.Clamp(state.Character.ForwardSpeed / this.MaxSpeedUnPSec, 0, 1))
+						: 1
+				);
+			float targetSpeedUnPSec = state.Character.InputController.GlobalMovementInput.Length()
+				* this.MaxSpeedUnPSec
+				* (
+					turnAngleRad > this.HarshTurnBeginAngleRad
+						? Mathf.Pow(
+							1 - (turnAngleRad - this.HarshTurnBeginAngleRad) / (this.HarshTurnMaxAngleRad - this.HarshTurnBeginAngleRad),
+							this.HarshTurnVelocityLossFactor
+						)
+						: 1
+				);
+			float accelerationUnPSecSq = targetSpeedUnPSec >= state.Character.ForwardSpeed ? this.AccelerationUnPSecSq
 				: Math.Abs(targetSpeedUnPSec - this.MaxSpeedUnPSec) < 0.01f ? this.NormalDecelerationUnPSecSq
 				: this.BreakDecelerationUnPSecSq;
-			state.Character.ApplyHorizontalMovement(new() {
-				TargetDirection = inputDirection,
-				RotationSpeedDegPSec = turnSpeedDgPSec,
-				TargetSpeedUnPSec = targetSpeedUnPSec,
-				AccelerationUnPSecSq = accelerationUnPSecSq
-			});
+			// Must calculate new forward speed before rotating the character because it depends on the character's
+			// forward speed, which changes if you rotate the charcter.
+			float newForwardSpeed = Mathf.MoveToward(state.Character.ForwardSpeed, targetSpeedUnPSec, accelerationUnPSecSq * delta);
+			if (state.Character.InputController.GlobalMovementInput.LengthSquared() > Mathf.Epsilon) {
+				state.Character.RotateToward(state.Character.InputController.GlobalMovementInput, turnSpeedRadPSec * delta);
+			}
+			state.Character.LocalVelocity = new Vector3(0, state.Character.Velocity.Y, newForwardSpeed * -1);
 		}
+		if ((this.DebugDrawFlags & 1) != 0) {
+			DebugDraw3D.DrawArrow(state.Character.GlobalPosition, state.Character.GlobalPosition + state.Character.Velocity, Colors.Red);
+		}
+		state.Character.MoveAndSlide();
 	}
 }

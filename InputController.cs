@@ -33,9 +33,12 @@ public class InputController
 		public void ProduceInput() => this.LastInputTime = Time.GetTicksMsec();
 	}
 
+	[Obsolete]
 	public Vector2 MovementInput { get; private set; }
-
-	private Dictionary<string, InputBuffer> InputBufferDict = new();
+    public Vector3 GlobalMovementInput { get; private set; }
+    public Vector2 LocalMovementInput { get; private set; }
+    public float TurnInput { get; private set; }
+    private Dictionary<string, InputBuffer> InputBufferDict = new();
 
 	private ISuperPlatformer3DCharacter Character;
 
@@ -57,6 +60,16 @@ public class InputController
 			this.Character.Settings.Input.MoveCameraFrontAction,
 			this.Character.Settings.Input.MoveCameraBackAction
 		);
+		this.GlobalMovementInput = GodotUtil.HV2ToV3(
+			this.MovementInput.Rotated(this.Character.GetViewport().GetCamera3D().Rotation.Y * -1)
+		);
+		this.LocalMovementInput = Input.GetVector(
+			this.Character.Settings.Input.StrafeLeftAction,
+			this.Character.Settings.Input.StrafeRightAction,
+			this.Character.Settings.Input.MoveBackwardAction,
+			this.Character.Settings.Input.MoveForwardAction
+		);
+		this.TurnInput = Input.GetAxis(this.Character.Settings.Input.TurnLeftAction, this.Character.Settings.Input.TurnRightAction);
 		foreach (var inputBuffer in this.InputBufferDict.Values) {
 			inputBuffer.Update();
 		}

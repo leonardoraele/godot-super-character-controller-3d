@@ -39,8 +39,8 @@ public partial class FallState : BaseMotionState
     public override HorizontalMovement GetHorizontalMovement()
     {
         HorizontalMovement hMovement = this.HorizontalMovementReference?.GetHorizontalMovement() ?? new();
-        hMovement.TargetSpeedUnPSec *= this.AirSpeedMultiplier;
-        hMovement.AccelerationUnPSecSq *= this.AirAccelerationMultiplier;
+        hMovement.TargetForwardSpeedUnPSec *= this.AirSpeedMultiplier;
+        hMovement.ForwardAccelerationUnPSecSq *= this.AirAccelerationMultiplier;
         hMovement.RotationSpeedDegPSec *= this.AirRotationSpeedMultiplier;
         return hMovement;
     }

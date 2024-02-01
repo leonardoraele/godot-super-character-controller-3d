@@ -40,6 +40,28 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     public InputController InputController { get; private set; } = null!; // Initialized on _Ready
     public Vector3 LastOnFloorPosition { get; private set; }
 
+	/// <summary>
+	/// This is the character's velocity relative to their basis of rotation. That is, the character's forward direction
+	/// is always the Z axis of their basis.
+	/// </summary>
+	public Vector3 LocalVelocity {
+		get => this.Velocity.Rotated(Vector3.Up, this.Rotation.Y * -1);
+		set => this.Velocity = value.Rotated(Vector3.Up, this.Rotation.Y);
+	}
+	public float ForwardSpeed {
+		get => this.LocalVelocity.Z * -1;
+		set => this.LocalVelocity = this.LocalVelocity with { Z = value * -1 };
+	}
+	public float SidewaySpeed {
+		get => this.LocalVelocity.X;
+		set => this.LocalVelocity = this.LocalVelocity with { X = value };
+	}
+	public float VerticalSpeed {
+		get => this.Velocity.Y;
+		set => this.Velocity = this.Velocity with { Y = value };
+	}
+	public Vector3 Forward => this.Basis.Z * -1;
+
 	// -----------------------------------------------------------------------------------------------------------------
 	// INTERNAL TYPES
 	// -----------------------------------------------------------------------------------------------------------------
@@ -109,6 +131,29 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     // PHYSICS UTILITY METHODS
     // -----------------------------------------------------------------------------------------------------------------
 
+	// public void RotateTowardAngle(float targetAngleRad, float rotationAmountRad)
+	// 	=> this.Rotation = Vector3.Up * Mathf.MoveToward(this.Rotation.Y, targetAngleRad, rotationAmountRad);
+	// public void RotateTowardAngleLerp(float targetAngleRad, float factor)
+	// 	=> this.Rotation = Vector3.Up * Mathf.LerpAngle(this.Rotation.Y, targetAngleRad, factor);
+	// public void RotateTowardDirection(Vector3 direction, float rotationAmountRad)
+	// 	=> throw new System.NotImplementedException(); // TODO
+	// public void RotateTowardDirectionLerp(Vector3 direction, float factor)
+	// 	=> throw new System.NotImplementedException(); // TODO
+	// public void RotateTowardPosition(Vector3 position, float rotationAmountRad)
+	// 	=> this.RotateTowardDirection((position - this.Position).Normalized(), rotationAmountRad);
+	// public void RotateTowardPositionLerp(Vector3 position, float factor)
+	// 	=> this.RotateTowardDirectionLerp((position - this.Position).Normalized(), factor);
+	// public void AccelerateForward(float targetSpeedUnPSec, float accelerationUnPSecSq)
+	// 	=> this.ForwardSpeed = Mathf.MoveToward(this.ForwardSpeed, targetSpeedUnPSec, accelerationUnPSecSq * this.PhysicsDelta);
+	// public void AccelerateSideway(float targetSpeedUnPSec, float accelerationUnPSecSq)
+	// 	=> this.SidewaySpeed = Mathf.MoveToward(this.SidewaySpeed, targetSpeedUnPSec, accelerationUnPSecSq * this.PhysicsDelta);
+	// public void AccelerateVertically(float targetSpeedUnPSec, float accelerationUnPSecSq)
+	// 	=> this.VerticalSpeed = Mathf.MoveToward(this.VerticalSpeed, targetSpeedUnPSec, accelerationUnPSecSq * this.PhysicsDelta);
+	public void LookToward(Vector3 globalDirection)
+		=> this.LookAt(this.GlobalPosition + globalDirection);
+	public void RotateToward(Vector3 globalDirection, float maxRadians)
+		=> this.LookToward(GodotUtil.RotateToward(this.GlobalTransform.Basis.Z * -1, globalDirection, maxRadians));
+
 	public void ApplyHorizontalMovement(HorizontalMovement movement)
 	{
 		float turnAngleRad = movement.TargetDirection.Length() > 0.01f
@@ -121,9 +166,17 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 				Math.Min(Math.Abs(turnAngleRad), rotationalSpeedRadPSec * this.PhysicsDelta) * Math.Sign(turnAngleRad)
 			);
 		this.Rotation = Vector3.Up * GodotUtil.V3ToHV2(newDirection).AngleTo(Vector2.Up);
-		float currentHorizontalSpeed = GodotUtil.V3ToHV2(this.Velocity).Length();
-		float newHorizontalSpeed = Mathf.MoveToward(currentHorizontalSpeed, movement.TargetSpeedUnPSec, movement.AccelerationUnPSecSq * this.PhysicsDelta);
-		this.Velocity = newDirection * newHorizontalSpeed + Vector3.Up * this.Velocity.Y;
+		float newSidewaySpeed = Mathf.MoveToward(
+			this.LocalVelocity.X,
+			movement.TargetSidewaySpeedUnPSec,
+			movement.SidewayAccelerationUnPSecSq * this.PhysicsDelta
+		);
+		float newForwardSpeed = Mathf.MoveToward(
+			this.LocalVelocity.Z,
+			movement.TargetForwardSpeedUnPSec,
+			movement.ForwardAccelerationUnPSecSq * this.PhysicsDelta
+		);
+		this.LocalVelocity = new Vector3(newSidewaySpeed, this.Velocity.Y, newForwardSpeed);
 	}
 
 	public void ApplyVerticalMovement(VerticalMovement movement)

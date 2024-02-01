@@ -50,14 +50,10 @@ public static class GodotUtil {
 	}
 
     public static Vector2 V3ToHV2(Vector3 v)
-    {
-		return new Vector2(v.X, v.Z);
-    }
+    	=> new Vector2(v.X, v.Z);
 
 	public static Vector3 HV2ToV3(Vector2 v)
-	{
-		return new Vector3(v.X, 0, v.Y);
-	}
+		=> new Vector3(v.X, 0, v.Y);
 
     public static T GetClosestParentOrThrow<T>(Node node) where T : Node
     {
@@ -68,4 +64,22 @@ public static class GodotUtil {
 		}
 		throw new Exception($"Failed to find parent of type {typeof(T).Name} for node \"{node.Name}\".");
     }
+
+    public static bool CheckNormalsAreParallel(Vector3 a, Vector3 b, float epsilon = Mathf.Epsilon)
+    {
+		float dot = a.Dot(b);
+		return dot <= -1 + epsilon || dot >= 1 - epsilon;
+    }
+
+	public static Vector3 RotateToward(Vector3 from, Vector3 to, float maxRadians, Vector3? defaultAxis = null)
+	{
+		float angle = from.AngleTo(to);
+		if (angle < Mathf.Epsilon) {
+			return to;
+		} else if (Mathf.Pi - angle < Mathf.Epsilon) {
+			return from.Rotated(defaultAxis ?? Vector3.Up, Math.Min(maxRadians, Mathf.Pi));
+		}
+		float weight = Mathf.Clamp(maxRadians / angle, 0, 1);
+		return from.Slerp(to, weight);
+	}
 }
