@@ -120,8 +120,25 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     // PHYSICS UTILITY METHODS
     // -----------------------------------------------------------------------------------------------------------------
 
-	public void LookToward(Vector3 globalDirection)
-		=> this.LookAt(this.GlobalPosition + globalDirection);
-	public void RotateToward(Vector3 globalDirection, float maxRadians)
-		=> this.LookToward(GodotUtil.RotateToward(this.GlobalTransform.Basis.Z * -1, globalDirection, maxRadians));
+	public void LookAt(Vector3 globalPosition, bool preserveLocalVelocity)
+	{
+		if (preserveLocalVelocity) {
+			Vector3 previousLocalVelocity = this.LocalVelocity;
+			this.LookAt(globalPosition);
+			this.LocalVelocity = previousLocalVelocity;
+		} else {
+			this.LookAt(globalPosition);
+		}
+	}
+	public void LookAtDirection(Vector3 globalDirection, bool preserveLocalVelocity = false)
+		=> this.LookAt(this.GlobalPosition + globalDirection, preserveLocalVelocity);
+	public void RotateToward(Vector3 globalPosition, float maxRadians, bool preserveLocalVelocity = false)
+	{
+		Vector3 direction = globalPosition - this.GlobalPosition;
+		if (direction.LengthSquared() > Mathf.Epsilon) {
+			this.RotateTowardDirection(direction.Normalized(), maxRadians, preserveLocalVelocity);
+		}
+	}
+	public void RotateTowardDirection(Vector3 globalDirection, float maxRadians, bool preserveLocalVelocity = false)
+		=> this.LookAt(this.GlobalPosition + GodotUtil.RotateToward(this.GlobalTransform.Basis.Z * -1, globalDirection, maxRadians), preserveLocalVelocity);
 }

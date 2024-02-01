@@ -161,13 +161,10 @@ public partial class HorizontalMovement : MotionStateController
 			float accelerationUnPSecSq = targetSpeedUnPSec >= state.Character.ForwardSpeed ? this.AccelerationUnPSecSq
 				: Math.Abs(targetSpeedUnPSec - this.MaxSpeedUnPSec) < 0.01f ? this.NormalDecelerationUnPSecSq
 				: this.BreakDecelerationUnPSecSq;
-			// Must calculate new forward speed before rotating the character because it depends on the character's
-			// forward speed, which changes if you rotate the charcter.
-			float newForwardSpeed = Mathf.MoveToward(state.Character.ForwardSpeed, targetSpeedUnPSec, accelerationUnPSecSq * delta);
+			state.Character.ForwardSpeed = Mathf.MoveToward(state.Character.ForwardSpeed, targetSpeedUnPSec, accelerationUnPSecSq * delta);
 			if (state.Character.InputController.GlobalMovementInput.LengthSquared() > Mathf.Epsilon) {
-				state.Character.RotateToward(state.Character.InputController.GlobalMovementInput, turnSpeedRadPSec * delta);
+				state.Character.RotateTowardDirection(state.Character.InputController.GlobalMovementInput, turnSpeedRadPSec * delta, true);
 			}
-			state.Character.LocalVelocity = new Vector3(0, state.Character.Velocity.Y, newForwardSpeed * -1);
 		}
 		if ((this.DebugDrawFlags & 1) != 0) {
 			DebugDraw3D.DrawArrow(state.Character.GlobalPosition, state.Character.GlobalPosition + state.Character.Velocity, Colors.Red);
