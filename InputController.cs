@@ -43,7 +43,7 @@ public class InputController
 	private ISuperPlatformer3DCharacter Character;
 
 	public interface ISuperPlatformer3DCharacter {
-		public SuperCharacter3DSettings Settings { get; }
+		public InputSettings InputSettings { get; }
 		public Viewport GetViewport();
 	}
 
@@ -55,21 +55,21 @@ public class InputController
 	public void Update()
 	{
 		this.MovementInput = Input.GetVector(
-			this.Character.Settings.Input.MoveCameraLeftAction,
-			this.Character.Settings.Input.MoveCameraRightAction,
-			this.Character.Settings.Input.MoveCameraFrontAction,
-			this.Character.Settings.Input.MoveCameraBackAction
+			this.Character.InputSettings.MoveCameraLeftAction,
+			this.Character.InputSettings.MoveCameraRightAction,
+			this.Character.InputSettings.MoveCameraFrontAction,
+			this.Character.InputSettings.MoveCameraBackAction
 		);
 		this.GlobalMovementInput = GodotUtil.HV2ToV3(
 			this.MovementInput.Rotated(this.Character.GetViewport().GetCamera3D().Rotation.Y * -1)
 		);
 		this.LocalMovementInput = Input.GetVector(
-			this.Character.Settings.Input.StrafeLeftAction,
-			this.Character.Settings.Input.StrafeRightAction,
-			this.Character.Settings.Input.MoveBackwardAction,
-			this.Character.Settings.Input.MoveForwardAction
+			this.Character.InputSettings.StrafeLeftAction,
+			this.Character.InputSettings.StrafeRightAction,
+			this.Character.InputSettings.MoveBackwardAction,
+			this.Character.InputSettings.MoveForwardAction
 		);
-		this.TurnInput = Input.GetAxis(this.Character.Settings.Input.TurnLeftAction, this.Character.Settings.Input.TurnRightAction);
+		this.TurnInput = Input.GetAxis(this.Character.InputSettings.TurnLeftAction, this.Character.InputSettings.TurnRightAction);
 		foreach (var inputBuffer in this.InputBufferDict.Values) {
 			inputBuffer.Update();
 		}

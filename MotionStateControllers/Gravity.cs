@@ -10,9 +10,10 @@ public partial class Gravity : MotionStateController
 
     public override void OnPhysicsProcessStateActive(ControlledState state, float delta)
     {
-        state.Character.ApplyVerticalMovement(new() {
-            TargetVerticalSpeed = this.MaxFallSpeedUnPSec * -1,
-            Acceleration = this.FallAccelerationUnPSecSq,
-        });
+        state.Character.VerticalSpeed = Mathf.MoveToward(
+            state.Character.VerticalSpeed,
+            this.MaxFallSpeedUnPSec * -1,
+            this.FallAccelerationUnPSecSq * delta
+        );
     }
 }

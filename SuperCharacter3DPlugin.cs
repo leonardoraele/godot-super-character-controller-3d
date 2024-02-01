@@ -1,6 +1,5 @@
 #if TOOLS
 using Godot;
-using Raele.SuperCharacter3D.MotionStates;
 
 namespace Raele.SuperCharacter3D;
 
@@ -19,18 +18,10 @@ public partial class SuperCharacter3DPlugin : EditorPlugin
 
         // Motion state nodes
         string[] states = new string[] {
-            // nameof(CrouchState),
-            // nameof(FallState),
-            // nameof(InteractingState),
-            // nameof(JumpState),
-            // nameof(WalkState),
-            // nameof(WallClimbState),
-            // nameof(WallSlideState),
-            // nameof(PropelState),
             nameof(ControlledState),
         };
         foreach (string stateName in states) {
-            Script script = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(MotionStates)}/{stateName}.cs");
+            Script script = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/MotionStates/{stateName}.cs");
             this.AddCustomType(stateName, nameof(Node), script, icon);
         }
     }
