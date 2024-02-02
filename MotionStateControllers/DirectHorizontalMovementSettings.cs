@@ -2,17 +2,9 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-public partial class HorizontalMovementSettings : Resource
+public partial class DirectHorizontalMovementSettings : Resource
 {
-	[Export] public float MaxSpeedUnPSec { get; private set; } = 6;
-	[Export] public float AccelerationUnPSecSq { get; private set; } = 20;
-	[Export] public float NormalDecelerationUnPSecSq { get; private set; } = 20;
-	[Export] public float BreakDecelerationUnPSecSq { get; private set; } = 20;
-
-	[ExportGroup("On Enter")]
-	[Export] public float InitialSpeedMultiplier { get; private set; } = 1;
-	[Export] public float InitialSpeedBoostUnPSec { get; private set; } = 0;
-	[Export] public InitialFacingDirectionEnum InitialFacingDirection = InitialFacingDirectionEnum.NoChange;
+	[Export] public ForwardMovementSettings ForwardMovement = new();
 
 	[ExportGroup("Turn Speed")]
 	/// <summary>
@@ -68,6 +60,19 @@ public partial class HorizontalMovementSettings : Resource
 	/// </summary>
 	[Export(PropertyHint.ExpEasing)] public float HarshTurnVelocityLossFactor = 1f;
 
+	[ExportGroup("Automatic Movement")]
+	/// <summary>
+	/// Minimum input value to consider the character is moving forward. This is used to automatically move the
+	/// character forward when the input is below this value. For example, if you set this to 0.5, the character will
+	/// move forward automatically when the input is between 0 and 0.5, but the player can still make the character move
+	/// faster by pressing a input higher than 0.5.
+	///
+	/// This might be useful for implementing "Dash" mechanics, where the game forces the character to move forward for
+	/// a small time duration before giving control back to the player. It might also useful to implement movement in
+	/// games where the player has limited control over speed of the character, but can control the direction.
+	/// </summary>
+	[Export(PropertyHint.Range, "0,1")] public float MinForwardInput = 0; // TODO Not implemented yet
+
 	public float HarshTurnMaxAngleRad {
 		get => Mathf.DegToRad(this.HarshTurnMaxAngleDeg);
 		set => this.HarshTurnMaxAngleDeg = Mathf.RadToDeg(value);
@@ -79,10 +84,5 @@ public partial class HorizontalMovementSettings : Resource
 	public float TurnSpeedRadPSec {
 		get => Mathf.DegToRad(this.TurnSpeedDegPSec);
 		set => this.TurnSpeedDegPSec = Mathf.RadToDeg(value);
-	}
-
-	public enum InitialFacingDirectionEnum {
-		NoChange,
-		InputDirection,
 	}
 }

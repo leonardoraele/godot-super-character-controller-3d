@@ -39,11 +39,12 @@ public partial class MotionStateMachine : Node
 	}
 
     public void Transition<T>(Variant? data = null) where T : IMotionState
-    {
-		this.Transition(typeof(T).Name, data);
-    }
+    	=> this.Transition(typeof(T).Name, data ?? 0);
 
-	public void Transition(string nextStateName, Variant? data = null)
+	public void Transition(string nextStateName)
+		=> this.Transition(nextStateName, 0);
+
+	public void Transition(string nextStateName, Variant data)
 	{
 		this.QueuedTransition?.Cancel();
 		this.QueuedTransition = new MotionStateTransition() {

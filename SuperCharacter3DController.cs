@@ -19,6 +19,10 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	// -----------------------------------------------------------------------------------------------------------------
 
 	[Export] public InputSettings InputSettings { get; private set; } = new InputSettings();
+	[Export] public InputController.CameraModeEnum CameraMode {
+		get => this.InputController.CameraMode;
+		set => this.InputController.CameraMode = value;
+	}
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// FIELDS & PROPERTIES
