@@ -5,7 +5,8 @@ namespace Raele.SuperCharacter3D;
 
 public partial class SuperCharacter3DDebugger : Node
 {
-	[Export] private float ShadowDurationSec = 6;
+	[Export] private MotionStateMachine? StateMachine;
+	[Export] private float ShadowDurationSec = 30;
 	[ExportGroup("Input Actions")]
 	[Export] private string InputActionPause = "debug_pause";
 	[Export] private string InputActionStep = "debug_step";
@@ -21,7 +22,9 @@ public partial class SuperCharacter3DDebugger : Node
 			return;
 		}
 		this.Character = character;
-		Callable.From(() => this.Character.StateMachine.StateChanged += this.OnStateChanged).CallDeferred();
+		if (this.StateMachine != null) {
+			this.StateMachine.StateChanged += this.OnStateChanged;
+		}
 		this.ProcessMode = ProcessModeEnum.Always;
 	}
 

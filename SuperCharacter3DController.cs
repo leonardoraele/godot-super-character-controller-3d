@@ -24,7 +24,6 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 	// FIELDS & PROPERTIES
 	// -----------------------------------------------------------------------------------------------------------------
 
-	public MotionStateMachine StateMachine { get; private set; } = null!;
 	public int AirDashesPerformedCounter = 0;
     private float PhysicsDelta = 1 / 60f;
     public InputController InputController { get; private set; } = null!; // Initialized on _Ready
@@ -67,19 +66,7 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 		base._Ready();
 		this.InputController = new InputController(this);
 		this.SetupCharacterBody3D();
-		this.SetupChildNodes();
     }
-
-	private void SetupChildNodes()
-	{
-		if (!GodotUtil.FindChildByType(this, out MotionStateMachine? stateMachine)) {
-            stateMachine = new MotionStateMachine {
-                Owner = this.Owner
-            };
-                // this.AddChild(stateMachine);
-        }
-		this.StateMachine = stateMachine;
-	}
 
     private void SetupCharacterBody3D()
 	{

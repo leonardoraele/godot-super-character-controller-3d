@@ -29,7 +29,7 @@ public partial class CollisionShapeEnabler : MotionStateController
     private List<uint> AffectedShapeOwners = new();
 
     public enum CollisionShapeEnablingMode {
-		// TODO // FIXME This option breaks when there are multiple CollisionShapeEnables in the same state, because
+		// TODO // FIXME This option breaks when there are multiple CollisionShapeEnables in the same this, because
 		// they override each other.
 		DisableOtherShapes,
 		KeepOtherShapes,
@@ -42,10 +42,10 @@ public partial class CollisionShapeEnabler : MotionStateController
 		// PrioritizeThis,
 	}
 
-    public override void OnEnter(ControlledState state, MotionStateTransition transition)
+    public override void OnEnter(MotionStateTransition transition)
     {
-		if (string.IsNullOrEmpty(this.CollisionShape) || state.Character.GetNode(this.CollisionShape) is not CollisionShape3D shape) {
-			throw new System.Exception($"{nameof(CollisionShapeEnabler)}.{nameof(this.CollisionShape)} property is not set, does not exist, or is not a CollisionShape3D. State: {state.Name}");
+		if (string.IsNullOrEmpty(this.CollisionShape) || this.Character.GetNode(this.CollisionShape) is not CollisionShape3D shape) {
+			throw new System.Exception($"{nameof(CollisionShapeEnabler)}.{nameof(this.CollisionShape)} property is not set, does not exist, or is not a CollisionShape3D. State: {this.Name}");
 		}
 		if (
 			shape.Shape != null
@@ -53,42 +53,42 @@ public partial class CollisionShapeEnabler : MotionStateController
 				this.OnSpaceLacking == SpaceLackingBehavior.CancelTransition
 				// || this.OnSpaceLacking == SpaceLackingBehavior.PrioritizeOther
 			)
-			&& !this.CheckForSpace(state.Character, shape)
+			&& !this.CheckForSpace(this.Character, shape)
 		) {
 			transition.Cancel();
 			return;
 		}
 		this.AffectedShapeOwners.Clear();
 		if (this.Mode == CollisionShapeEnablingMode.DisableOtherShapes) {
-			foreach (uint ownerId in state.Character.GetShapeOwners()) {
-				if (!state.Character.IsShapeOwnerDisabled(ownerId)) {
+			foreach (uint ownerId in this.Character.GetShapeOwners()) {
+				if (!this.Character.IsShapeOwnerDisabled(ownerId)) {
 					this.AffectedShapeOwners.Add(ownerId);
 				}
 			}
 		}
 		foreach (var ownerId in this.AffectedShapeOwners) {
-			state.Character.ShapeOwnerSetDisabled(ownerId, true);
+			this.Character.ShapeOwnerSetDisabled(ownerId, true);
 		}
 		shape.Disabled = false;
 	}
 
-	public override void OnExit(ControlledState state, MotionStateTransition transition)
+	public override void OnExit(MotionStateTransition transition)
 	{
 		if (
 			(
 				this.OnSpaceLacking == SpaceLackingBehavior.CancelTransition
 				// || this.OnSpaceLacking == SpaceLackingBehavior.PrioritizeThis
 			)
-			&& !this.AffectedShapeOwners.All(ownerId => this.CheckForSpace(state.Character, ownerId))
+			&& !this.AffectedShapeOwners.All(ownerId => this.CheckForSpace(this.Character, ownerId))
 		) {
 			transition.Cancel();
 			return;
 		}
-		if (!string.IsNullOrEmpty(this.CollisionShape) && state.Character.GetNode(this.CollisionShape) is CollisionShape3D shape) {
+		if (!string.IsNullOrEmpty(this.CollisionShape) && this.Character.GetNode(this.CollisionShape) is CollisionShape3D shape) {
 			shape.Disabled = true;
 		}
 		foreach (uint ownerId in this.AffectedShapeOwners) {
-			state.Character.ShapeOwnerSetDisabled(ownerId, false);
+			this.Character.ShapeOwnerSetDisabled(ownerId, false);
 		}
     }
 

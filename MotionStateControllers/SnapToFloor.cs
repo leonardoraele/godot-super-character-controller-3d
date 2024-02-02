@@ -5,8 +5,8 @@ namespace Raele.SuperCharacter3D.MotionStateControllers;
 [GlobalClass]
 public partial class SnapToFloor : MotionStateController
 {
-    public override void OnPhysicsProcessStateActive(ControlledState state, float delta)
+    public override void OnPhysicsProcessStateActive(float delta)
     {
-		state.Character.ApplyFloorSnap();
+		this.Character.ApplyFloorSnap();
 	}
 }

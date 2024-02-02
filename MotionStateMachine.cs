@@ -7,9 +7,9 @@ public partial class MotionStateMachine : Node
 {
 	[Export] Node? InitialState;
 	public SuperCharacter3DController Character { get; private set; } = null!;
-	public IMotionState? CurrentState { get; private set; }
-    public IMotionState? PreviousState { get; private set; }
-	public MotionStateTransition? QueuedTransition;
+	public Node? CurrentState { get; private set; }
+    public Node? PreviousState { get; private set; }
+	private MotionStateTransition? QueuedTransition;
 	private ulong LastStateChangeTimestamp;
 
     public ulong TimeSinceLastStateChangeMs => Time.GetTicksMsec() - this.LastStateChangeTimestamp;
@@ -35,17 +35,7 @@ public partial class MotionStateMachine : Node
 
     public override void _Process(double delta)
 	{
-		try {
-			this.CurrentState?.OnProcessStateActive((float) delta);
-		} catch (Exception e) {
-			GD.PushError(e);
-		}
 		this.CallDeferred(nameof(this.PerformTransition));
-	}
-
-	public override void _PhysicsProcess(double delta)
-	{
-		this.CurrentState?.OnPhysicsProcessStateActive((float) delta);
 	}
 
     public void Transition<T>(Variant? data = null) where T : IMotionState
@@ -80,7 +70,11 @@ public partial class MotionStateMachine : Node
 		// Exit current state
 		{
 			try {
-				this.CurrentState?.OnExit(currentTransition);
+				if (this.CurrentState != null && this.CurrentState is IMotionState state) {
+					state.OnExit(currentTransition);
+				} else if (this.CurrentState?.HasMethod("on_exit") == true) {
+					this.CurrentState.Call("on_exit", currentTransition.AsDictionary());
+				}
 			} catch (Exception e) {
 				GD.PushError(e);
 			}
@@ -110,7 +104,9 @@ public partial class MotionStateMachine : Node
 			this.CurrentState = null;
 		}
 
-		if (!(this.GetNode<IMotionState>(this.QueuedTransition.NextStateName) is IMotionState nextState)) {
+		Node? nextState = this.GetNode(this.QueuedTransition.NextStateName);
+
+		if (nextState == null) {
 			GD.PushError(
 				"Failed to transition motion states. ",
 				"Cause: State not found. ",
@@ -124,7 +120,11 @@ public partial class MotionStateMachine : Node
 		// Enter new state
 		{
 			try {
-				nextState.OnEnter(this.QueuedTransition);
+				if (nextState is IMotionState state) {
+					state.OnExit(this.QueuedTransition);
+				} else if (nextState.HasMethod("on_enter")) {
+					nextState.Call("on_enter", this.QueuedTransition.AsDictionary());
+				}
 			} catch (Exception e) {
 				currentTransition.Cancel();
 				GD.PushError(e);
@@ -136,14 +136,14 @@ public partial class MotionStateMachine : Node
 				if (this.QueuedTransition == null) {
 					GD.PrintS(
 						Time.GetTicksMsec(), nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
-						"🚫", "Canceled by", $"{nextState.Name}.{nameof(nextState.OnEnter)}"
+						"🚫", "Canceled by", $"{nextState.Name}.{nameof(IMotionState.OnEnter)}"
 					);
 					this.Reset();
 					return;
 				} else {
 					GD.PrintS(
 						Time.GetTicksMsec(), nameof(MotionStateMachine), nameof(this.PerformTransition), ":",
-						"🔄", "Redirected by", $"{nextState.Name}.{nameof(nextState.OnEnter)}",
+						"🔄", "Redirected by", $"{nextState.Name}.{nameof(IMotionState.OnEnter)}",
 						"->", this.QueuedTransition.NextStateName
 					);
  					this.CallDeferred(nameof(this.PerformTransition));
