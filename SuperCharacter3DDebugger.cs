@@ -98,19 +98,20 @@ public partial class SuperCharacter3DDebugger : Node
 		}
 
 		// Debug drawings
-		if (this.ShouldDrawVelocity) {
-			DebugDraw3D.DrawArrow(
-				this.Character.GlobalPosition,
-				this.Character.GlobalPosition + this.Character.Velocity,
-				Colors.Red
-			);
-		}
-		if (this.ShouldDrawInput) {
-			DebugDraw3D.DrawArrow(
-				this.Character.GlobalPosition,
-				this.Character.GlobalPosition + this.Character.InputController.GlobalMovementInput,
-				Colors.Green
-			);
-		}
+		// TODO DebugDraw3D might not be present in the project
+		// if (this.ShouldDrawVelocity) {
+		// 	DebugDraw3D.DrawArrow(
+		// 		this.Character.GlobalPosition,
+		// 		this.Character.GlobalPosition + this.Character.Velocity,
+		// 		Colors.Red
+		// 	);
+		// }
+		// if (this.ShouldDrawInput) {
+		// 	DebugDraw3D.DrawArrow(
+		// 		this.Character.GlobalPosition,
+		// 		this.Character.GlobalPosition + this.Character.InputController.GlobalMovementInput,
+		// 		Colors.Green
+		// 	);
+		// }
     }
 }
