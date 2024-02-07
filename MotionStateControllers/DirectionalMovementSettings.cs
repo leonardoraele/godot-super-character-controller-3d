@@ -2,7 +2,8 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-public partial class DirectHorizontalMovementSettings : Resource
+[GlobalClass]
+public partial class DirectionalMovementSettings : Resource
 {
 	[Export] public ForwardMovementSettings ForwardMovement = new();
 

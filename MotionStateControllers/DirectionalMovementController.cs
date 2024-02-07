@@ -3,10 +3,9 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-[GlobalClass]
-public partial class DirectHorizontalMovementController : MotionStateController
+public partial class DirectionalMovementController : MotionStateController
 {
-	[Export] public DirectHorizontalMovementSettings Settings = new();
+	[Export] public DirectionalMovementSettings Settings = null!;
 	[ExportGroup("Exit Conditions")]
 	[Export] public string? StateTransitionOnHarshTurn;
 

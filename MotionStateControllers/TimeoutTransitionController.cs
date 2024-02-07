@@ -2,8 +2,7 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-[GlobalClass]
-public partial class LimitDuration : MotionStateController
+public partial class TimeoutTransitionController : MotionStateController
 {
 	[Export] public ulong MaxDurationMs = 1000;
 	[Export] public string? StateTransitionOnLimitReached;

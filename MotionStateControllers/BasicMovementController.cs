@@ -3,13 +3,22 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-[GlobalClass]
-public partial class FixedDirectionHorizontalMovementController : MotionStateController
+/// <summary>
+/// Moves the player toward the direction the player enters with directional input.
+///
+/// You can set different speed values for sideway movement and backward movement if you want, but this controller does
+/// not update the character's facing direction, so you should combine it with another controller that does so for a
+/// better result.
+///
+/// This controller only updates the character's X and Z velocity. You can combine it with other controllers that update
+/// the character's facing direction and Y velocity.
+/// </summary>
+public partial class BasicMovementController : MotionStateController
 {
-	[Export] FixedDirectionHorizontalMovementSettings Settings = new();
+	[Export] BasicMovementSettings Settings = null!;
 
 	public override void OnEnter(MotionStateTransition transition)
-		=> this.Settings.ForwardMovement.OnEnter(this.Character);
+		=> this.Settings.OnEnter(this.Character);
 
     public override void OnPhysicsProcessStateActive(float delta)
 	{
@@ -36,15 +45,15 @@ public partial class FixedDirectionHorizontalMovementController : MotionStateCon
 				0,
 				newLocalDirection.Z * (
 					newLocalDirection.Z < 0
-						? this.Settings.ForwardMovement.MaxSpeedUnPSec
+						? this.Settings.MaxSpeedUnPSec
 						: this.Settings.MaxBackwardSpeedUnPSec
 				)
 			)
 			.Length();
 		float targetSpeed = maxSpeed * inputStrength;
-		float acceleration = targetSpeed >= currentSpeed ? this.Settings.ForwardMovement.AccelerationUnPSecSq
-			: Math.Abs(targetSpeed - maxSpeed) < Mathf.Epsilon ? this.Settings.ForwardMovement.NormalDecelerationUnPSecSq
-			: this.Settings.ForwardMovement.BreakDecelerationUnPSecSq;
+		float acceleration = targetSpeed >= currentSpeed ? this.Settings.AccelerationUnPSecSq
+			: Math.Abs(targetSpeed - maxSpeed) < Mathf.Epsilon ? this.Settings.NormalDecelerationUnPSecSq
+			: this.Settings.BreakDecelerationUnPSecSq;
 		float newSpeed = Mathf.MoveToward(currentSpeed, targetSpeed, acceleration * delta);
 		this.Character.Velocity = newGlobalDirection * newSpeed;
 	}

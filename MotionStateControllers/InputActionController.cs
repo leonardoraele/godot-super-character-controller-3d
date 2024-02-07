@@ -2,8 +2,7 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-[GlobalClass]
-public partial class InputAction : MotionStateController
+public partial class InputActionController : MotionStateController
 {
 	/// <summary>
 	/// Name of the input action to be read for this ability.
@@ -99,7 +98,7 @@ public partial class InputAction : MotionStateController
 				if (this.AbilityData != null) {
 					this.AbilityData.UseCount++;
 				}
-				GD.PrintS(Time.GetTicksMsec(), nameof(InputAction), ":", "⚡", "Action triggered.", "State:", this.State.Name, "Action:", this.InputActionName, "Transition:", this.StateTransition);
+				GD.PrintS(Time.GetTicksMsec(), nameof(InputActionController), ":", "⚡", "Action triggered.", "State:", this.State.Name, "Action:", this.InputActionName, "Transition:", this.StateTransition);
 				this.CancelActionCheckActive = true;
 				this.State.StateMachine.Transition(this.StateTransition);
 			}
@@ -121,9 +120,9 @@ public partial class InputAction : MotionStateController
 					&& this.State.StateMachine.Character.InputController.GetInputBuffer(this.InputActionName).ConsumeInput()
 				) {
 					if (this.AbilityData?.TimeLimitExceeded == true) {
-						GD.PrintS(Time.GetTicksMsec(), nameof(InputAction), ":", "⛔", "Ability time limit exceeded. State:", this.State.Name, "Action:", this.InputActionName);
+						GD.PrintS(Time.GetTicksMsec(), nameof(InputActionController), ":", "⛔", "Ability time limit exceeded. State:", this.State.Name, "Action:", this.InputActionName);
 					} else {
-						GD.PrintS(Time.GetTicksMsec(), nameof(InputAction), ":", "↩", "Ability canceled.", "State:", this.State.Name, "Action:", this.InputActionName);
+						GD.PrintS(Time.GetTicksMsec(), nameof(InputActionController), ":", "↩", "Ability canceled.", "State:", this.State.Name, "Action:", this.InputActionName);
 					}
 					this.State.StateMachine.Transition(string.IsNullOrEmpty(this.StateTransitionOnAbilityCanceled) ? this.State.Name : this.StateTransitionOnAbilityCanceled);
 				}

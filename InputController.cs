@@ -42,8 +42,9 @@ public class InputController
 	/// <summary>
 	/// Determines how the InputController deals with player directional input when there are changes in camera angle.
 	///
-	/// This property changes how <see cref="GlobalMovementInput"/> is updated. If your character controls don't use
-	/// global input, this property is irrelevant.
+	/// This property changes how <see cref="GlobalMovementInput"/> is updated. If your character controls don't rely on
+	/// global input, this property is irrelevant. For example, games that use "tank controls" don't rely on the camera
+	/// perspective for character control.
 	///
 	/// For games that alternate bewtween different camera modes, (static and dynamic) it is recommended that this
 	/// property is properly updated whenever a different camera mode is used. e.g. set this to StaticCamera in sections

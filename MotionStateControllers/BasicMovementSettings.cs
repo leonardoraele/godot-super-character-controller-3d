@@ -2,10 +2,9 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-public partial class FixedDirectionHorizontalMovementSettings : Resource
+[GlobalClass]
+public partial class BasicMovementSettings : ForwardMovementSettings
 {
-	[Export] public ForwardMovementSettings ForwardMovement = new();
-
 	[Export] public float MaxSidewaySpeedUnPSec = 6;
 	[Export] public float MaxBackwardSpeedUnPSec = 4;
 	[Export] public float TurnSpeedDegPSec = 720;

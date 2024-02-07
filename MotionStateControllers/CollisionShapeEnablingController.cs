@@ -4,8 +4,7 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-[GlobalClass]
-public partial class CollisionShapeEnabler : MotionStateController
+public partial class CollisionShapeEnablingController : MotionStateController
 {
 	// TODO When MotionStateControllers are refactored to nodes, this should become a reference to a CollisionShape3D
 	[Export] public string? CollisionShape;
@@ -45,7 +44,7 @@ public partial class CollisionShapeEnabler : MotionStateController
     public override void OnEnter(MotionStateTransition transition)
     {
 		if (string.IsNullOrEmpty(this.CollisionShape) || this.Character.GetNode(this.CollisionShape) is not CollisionShape3D shape) {
-			throw new System.Exception($"{nameof(CollisionShapeEnabler)}.{nameof(this.CollisionShape)} property is not set, does not exist, or is not a CollisionShape3D. State: {this.Name}");
+			throw new System.Exception($"{nameof(CollisionShapeEnablingController)}.{nameof(this.CollisionShape)} property is not set, does not exist, or is not a CollisionShape3D. State: {this.Name}");
 		}
 		if (
 			shape.Shape != null

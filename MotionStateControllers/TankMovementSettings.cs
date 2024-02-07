@@ -2,9 +2,9 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-public partial class LocalDirectionsHorizontalMovementSettings : Resource
+[GlobalClass]
+public partial class TankMovementSettings : ForwardMovementSettings
 {
-	[Export] public ForwardMovementSettings ForwardMovement = new();
     [Export] public float MaxBackwardSpeedUnPSec = 3;
 	[Export] public float BackwardAccelerationUnPSecSqr = 10;
 

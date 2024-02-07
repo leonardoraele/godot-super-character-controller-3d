@@ -3,19 +3,18 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
-[GlobalClass]
-public partial class LocalDirectionsHorizontalMovementController : MotionStateController
+public partial class TankMovementController : MotionStateController
 {
-	[Export] LocalDirectionsHorizontalMovementSettings Settings = new();
+	[Export] TankMovementSettings Settings = null!;
 
 	public override void OnEnter(MotionStateTransition transition)
-		=> this.Settings.ForwardMovement.OnEnter(this.Character);
+		=> this.Settings.OnEnter(this.Character);
 
     public override void OnPhysicsProcessStateActive(float delta)
 	{
 		// Forward movement
 		float targetForwardSpeed = this.Character.InputController.RawMovementInput.Y >= 0
-			? this.Settings.ForwardMovement.MaxSpeedUnPSec * this.Character.InputController.RawMovementInput.Y
+			? this.Settings.MaxSpeedUnPSec * this.Character.InputController.RawMovementInput.Y
 			: this.Settings.MaxBackwardSpeedUnPSec * this.Character.InputController.RawMovementInput.Y;
 		float currentForwardSpeed = this.Character.ForwardSpeed;
 		DebugDraw2D.SetText(
@@ -28,13 +27,13 @@ public partial class LocalDirectionsHorizontalMovementController : MotionStateCo
 				: "break"
 		);
 		float acceleration = currentForwardSpeed >= 0 && targetForwardSpeed > currentForwardSpeed
-				? this.Settings.ForwardMovement.AccelerationUnPSecSq
+				? this.Settings.AccelerationUnPSecSq
 			: currentForwardSpeed <= 0 && targetForwardSpeed < currentForwardSpeed
 				? this.Settings.BackwardAccelerationUnPSecSqr
 			: currentForwardSpeed > 0 && Math.Abs(this.Character.InputController.RawMovementInput.Y - 1) < Mathf.Epsilon
 			|| currentForwardSpeed < 0 && Math.Abs(this.Character.InputController.RawMovementInput.Y * -1 - 1) < Mathf.Epsilon
-				? this.Settings.ForwardMovement.NormalDecelerationUnPSecSq
-			: this.Settings.ForwardMovement.BreakDecelerationUnPSecSq;
+				? this.Settings.NormalDecelerationUnPSecSq
+			: this.Settings.BreakDecelerationUnPSecSq;
 		float newSpeed = Mathf.MoveToward(currentForwardSpeed, targetForwardSpeed, acceleration * delta);
 		this.Character.LocalVelocity = new Vector3(0, this.Character.Velocity.Y, newSpeed * -1);
 

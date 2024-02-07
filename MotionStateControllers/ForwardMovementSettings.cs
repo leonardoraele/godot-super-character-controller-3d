@@ -1,8 +1,8 @@
-using System;
 using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
+[GlobalClass]
 public partial class ForwardMovementSettings : Resource
 {
 	[Export] public float MaxSpeedUnPSec { get; private set; } = 6;
