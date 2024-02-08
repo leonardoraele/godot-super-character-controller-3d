@@ -41,4 +41,9 @@ public partial class ControlledState : Node
 			this.Character.CallDeferred("move_and_slide");
 		}
 	}
+
+	public void Transition()
+	{
+		this.StateMachine.Transition(this.Name);
+	}
 }

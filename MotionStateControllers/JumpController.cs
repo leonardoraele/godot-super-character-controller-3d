@@ -6,9 +6,6 @@ namespace Raele.SuperCharacter3D.MotionStateControllers;
 public partial class JumpController : MotionStateController
 {
     [Export] public JumpSettings Settings = null!;
-    [ExportGroup("Exit Conditions")]
-    [Export] public string StateTransitionOnJumpApex = "FallState";
-    [Export] public string StateTransitionOnHitCeiling = "FallState";
 
     [Signal] public delegate void JumpApexReachedEventHandler();
     [Signal] public delegate void HitCeilingEventHandler();
@@ -18,9 +15,6 @@ public partial class JumpController : MotionStateController
     public override void OnProcessStateActive(float delta)
     {
         if (this.State.DurationActiveMs >= this.Settings.JumpDurationMs) {
-            if (!string.IsNullOrEmpty(this.StateTransitionOnJumpApex)) {
-                this.State.StateMachine.Transition(this.StateTransitionOnJumpApex);
-            }
             this.EmitSignal(SignalName.JumpApexReached);
         } else if (
             this.HitCeilingTimestamp != 0
@@ -29,9 +23,6 @@ public partial class JumpController : MotionStateController
                 || Time.GetTicksMsec() >= this.HitCeilingTimestamp + this.Settings.CeilingSlideLeniencyMs
             )
         ) {
-            if (!string.IsNullOrEmpty(this.StateTransitionOnHitCeiling)) {
-                this.State.StateMachine.Transition(this.StateTransitionOnHitCeiling);
-            }
             this.EmitSignal(SignalName.HitCeiling);
         }
     }

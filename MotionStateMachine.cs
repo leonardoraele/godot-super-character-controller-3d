@@ -38,9 +38,6 @@ public partial class MotionStateMachine : Node
 		this.CallDeferred(nameof(this.PerformTransition));
 	}
 
-    public void Transition<T>(Variant? data = null) where T : IMotionState
-    	=> this.Transition(typeof(T).Name, data ?? 0);
-
 	public void Transition(string nextStateName)
 		=> this.Transition(nextStateName, 0);
 

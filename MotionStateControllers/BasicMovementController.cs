@@ -22,9 +22,10 @@ public partial class BasicMovementController : MotionStateController
 
     public override void OnPhysicsProcessStateActive(float delta)
 	{
-		float currentSpeed = this.Character.Velocity.Length();
+		Vector3 horizontalVelocity = new Vector3(this.Character.Velocity.X, 0, this.Character.Velocity.Z);
+		float currentSpeed = horizontalVelocity.Length();
 		bool hasVelocity = currentSpeed > Mathf.Epsilon;
-		Vector3 currentGlobalDirection = hasVelocity ? this.Character.Velocity.Normalized() : this.Character.Forward;
+		Vector3 currentGlobalDirection = hasVelocity ? horizontalVelocity.Normalized() : this.Character.Forward;
 		float inputStrength = this.Character.InputController.GlobalMovementInput.Length();
 		bool hasInput = inputStrength > Mathf.Epsilon;
 		Vector3 inputDirection = hasInput
@@ -55,6 +56,6 @@ public partial class BasicMovementController : MotionStateController
 			: Math.Abs(targetSpeed - maxSpeed) < Mathf.Epsilon ? this.Settings.NormalDecelerationUnPSecSq
 			: this.Settings.BreakDecelerationUnPSecSq;
 		float newSpeed = Mathf.MoveToward(currentSpeed, targetSpeed, acceleration * delta);
-		this.Character.Velocity = newGlobalDirection * newSpeed;
+		this.Character.Velocity = newGlobalDirection * newSpeed + Vector3.Up * this.Character.Velocity.Y;
 	}
 }

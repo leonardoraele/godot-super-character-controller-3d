@@ -37,8 +37,6 @@ public class InputController
 	public Vector2 MovementInput { get; private set; }
 	public Vector2 RawMovementInput { get; private set; }
     public Vector3 GlobalMovementInput { get; private set; }
-    public Vector2 LocalMovementInput { get; private set; }
-    public float TurnInput { get; private set; }
 	/// <summary>
 	/// Determines how the InputController deals with player directional input when there are changes in camera angle.
 	///
@@ -53,13 +51,8 @@ public class InputController
 	public CameraModeEnum CameraMode = CameraModeEnum.DynamicCamera;
 
     private Dictionary<string, InputBuffer> InputBufferDict = new();
-	private ISuperPlatformer3DCharacter Character;
+	private SuperCharacter3DController Character;
     private float CameraRotation;
-
-    public interface ISuperPlatformer3DCharacter {
-		public InputSettings InputSettings { get; }
-		public Viewport GetViewport();
-	}
 
 	public enum CameraModeEnum {
 		/// <summary>
@@ -99,16 +92,16 @@ public class InputController
 		DynamicCameraCut,
 	}
 
-	public InputController(ISuperPlatformer3DCharacter character)
+	public InputController(SuperCharacter3DController character)
 		=> this.Character = character;
 
 	public void Update()
 	{
 		this.RawMovementInput = Input.GetVector(
-			this.Character.InputSettings.MoveCameraLeftAction,
-			this.Character.InputSettings.MoveCameraRightAction,
-			this.Character.InputSettings.MoveCameraBackAction,
-			this.Character.InputSettings.MoveCameraFrontAction
+			this.Character.MoveLeftAction,
+			this.Character.MoveRightAction,
+			this.Character.MoveBackAction,
+			this.Character.MoveForwardAction
 		);
 		this.MovementInput = new Vector2(this.RawMovementInput.X, this.RawMovementInput.Y * -1);
 		if (this.CameraMode == CameraModeEnum.DynamicCamera) {
@@ -125,13 +118,6 @@ public class InputController
 				this.GlobalMovementInput = GodotUtil.HV2ToV3(this.MovementInput.Rotated(this.CameraRotation));
 			}
 		}
-		this.LocalMovementInput = Input.GetVector(
-			this.Character.InputSettings.StrafeLeftAction,
-			this.Character.InputSettings.StrafeRightAction,
-			this.Character.InputSettings.MoveBackwardAction,
-			this.Character.InputSettings.MoveForwardAction
-		);
-		this.TurnInput = Input.GetAxis(this.Character.InputSettings.TurnLeftAction, this.Character.InputSettings.TurnRightAction);
 		foreach (var inputBuffer in this.InputBufferDict.Values) {
 			inputBuffer.Update();
 		}

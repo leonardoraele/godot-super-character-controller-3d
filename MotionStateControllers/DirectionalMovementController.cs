@@ -6,8 +6,6 @@ namespace Raele.SuperCharacter3D.MotionStateControllers;
 public partial class DirectionalMovementController : MotionStateController
 {
 	[Export] public DirectionalMovementSettings Settings = null!;
-	[ExportGroup("Exit Conditions")]
-	[Export] public string? StateTransitionOnHarshTurn;
 
 	[Signal] public delegate void HarshTurnEventHandler();
 
@@ -26,9 +24,6 @@ public partial class DirectionalMovementController : MotionStateController
 				0,
 				this.Settings.ForwardMovement.BreakDecelerationUnPSecSq * delta
 			);
-			if (!string.IsNullOrEmpty(this.StateTransitionOnHarshTurn)) {
-				this.StateMachine.Transition(this.StateTransitionOnHarshTurn);
-			}
 			this.EmitSignal(SignalName.HarshTurn);
 		} else {
 			float turnSpeedRadPSec = Math.Abs(this.Character.ForwardSpeed) <= Mathf.Epsilon

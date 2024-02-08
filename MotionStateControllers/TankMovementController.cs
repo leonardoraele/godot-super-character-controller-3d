@@ -17,15 +17,16 @@ public partial class TankMovementController : MotionStateController
 			? this.Settings.MaxSpeedUnPSec * this.Character.InputController.RawMovementInput.Y
 			: this.Settings.MaxBackwardSpeedUnPSec * this.Character.InputController.RawMovementInput.Y;
 		float currentForwardSpeed = this.Character.ForwardSpeed;
-		DebugDraw2D.SetText(
-			"acceleration",
-			currentForwardSpeed >= 0 && targetForwardSpeed > currentForwardSpeed ? "forward"
-				: currentForwardSpeed <= 0 && targetForwardSpeed < currentForwardSpeed ? "backward"
-				: targetForwardSpeed > 0 && Math.Abs(this.Character.InputController.RawMovementInput.Y - 1) < Mathf.Epsilon
-				|| targetForwardSpeed < 0 && Math.Abs(this.Character.InputController.RawMovementInput.Y * -1 - 1) < Mathf.Epsilon
-					? "normal"
-				: "break"
-		);
+		// TODO DebugDraw2D might not be present in the project
+		// DebugDraw2D.SetText(
+		// 	"acceleration",
+		// 	currentForwardSpeed >= 0 && targetForwardSpeed > currentForwardSpeed ? "forward"
+		// 		: currentForwardSpeed <= 0 && targetForwardSpeed < currentForwardSpeed ? "backward"
+		// 		: targetForwardSpeed > 0 && Math.Abs(this.Character.InputController.RawMovementInput.Y - 1) < Mathf.Epsilon
+		// 		|| targetForwardSpeed < 0 && Math.Abs(this.Character.InputController.RawMovementInput.Y * -1 - 1) < Mathf.Epsilon
+		// 			? "normal"
+		// 		: "break"
+		// );
 		float acceleration = currentForwardSpeed >= 0 && targetForwardSpeed > currentForwardSpeed
 				? this.Settings.AccelerationUnPSecSq
 			: currentForwardSpeed <= 0 && targetForwardSpeed < currentForwardSpeed

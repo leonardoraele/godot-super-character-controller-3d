@@ -3,26 +3,37 @@ using Godot;
 namespace Raele.SuperCharacter3D;
 
 // TODO Make presets for:
-// P1:
-// - Super Mario Odyssey
-// - Crash Bandicoot 4
-// - Minecraft
-// P2:
+// - Super Mario 64/Odyssey
+// - Tomb Raider
+// - Devil May Cry 3/5
 // - Fall Guys
-// - Pseudoregalia
-// - Devil May Cry 3
-// - A Hat in Time
-public partial class SuperCharacter3DController : CharacterBody3D, InputController.ISuperPlatformer3DCharacter
+// - Counter-Strike 2
+public partial class SuperCharacter3DController : CharacterBody3D
 {
 	// -----------------------------------------------------------------------------------------------------------------
 	// EXPORTED FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	[Export] public InputSettings InputSettings { get; private set; } = new InputSettings();
+	[ExportGroup("Directional Input Map")]
+	[Export] public string MoveForwardAction { get; private set; } = "character_move_forward";
+	[Export] public string MoveBackAction { get; private set; } = "character_move_back";
+	[Export] public string MoveLeftAction { get; private set; } = "character_move_left";
+	[Export] public string MoveRightAction { get; private set; } = "character_move_right";
 	[Export] public InputController.CameraModeEnum CameraMode {
 		get => this.InputController.CameraMode;
 		set => this.InputController.CameraMode = value;
 	}
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// SIGNALS
+	// -----------------------------------------------------------------------------------------------------------------
+
+	[Signal] public delegate void OnFloorEnterEventHandler();
+	[Signal] public delegate void OnFloorExitEventHandler();
+	[Signal] public delegate void OnWallEnterEventHandler();
+	[Signal] public delegate void OnWallExitEventHandler();
+	[Signal] public delegate void OnCeilingEnterEventHandler();
+	[Signal] public delegate void OnCeilingExitEventHandler();
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// FIELDS & PROPERTIES
@@ -32,6 +43,9 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
     private float PhysicsDelta = 1 / 60f;
     public InputController InputController { get; private set; } = null!; // Initialized on _Ready
     public Vector3 LastOnFloorPosition { get; private set; }
+	private bool WasOnFloorLastFrame;
+	private bool WasOnWallLastFrame;
+	private bool WasOnCeilingLastFrame;
 
 	/// <summary>
 	/// This is the character's velocity relative to their basis of rotation. That is, the character's forward direction
@@ -89,6 +103,9 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
         base._Process(delta);
 		this.InputController.Update();
 		this.UpdateLastOnFloorPosition();
+		this.UpdateLastOnFloorState();
+		this.UpdateLastOnWallState();
+		this.UpdateLastOnCeilingState();
     }
 
     public override void _PhysicsProcess(double delta)
@@ -105,6 +122,36 @@ public partial class SuperCharacter3DController : CharacterBody3D, InputControll
 		if (this.IsOnFloor() && this.Position.DistanceSquaredTo(this.LastOnFloorPosition) >= 1) {
 			this.LastOnFloorPosition = this.Position;
 		}
+	}
+
+    private void UpdateLastOnFloorState()
+	{
+		if (this.IsOnFloor() && !this.WasOnFloorLastFrame) {
+			this.EmitSignal(SignalName.OnFloorEnter);
+		} else if (!this.IsOnFloor() && this.WasOnFloorLastFrame) {
+			this.EmitSignal(SignalName.OnFloorExit);
+		}
+		this.WasOnFloorLastFrame = this.IsOnFloor();
+	}
+
+    private void UpdateLastOnWallState()
+	{
+		if (this.IsOnWall() && !this.WasOnWallLastFrame) {
+			this.EmitSignal(SignalName.OnWallEnter);
+		} else if (!this.IsOnWall() && this.WasOnWallLastFrame) {
+			this.EmitSignal(SignalName.OnWallExit);
+		}
+		this.WasOnWallLastFrame = this.IsOnWall();
+	}
+
+    private void UpdateLastOnCeilingState()
+	{
+		if (this.IsOnCeiling() && !this.WasOnCeilingLastFrame) {
+			this.EmitSignal(SignalName.OnCeilingEnter);
+		} else if (!this.IsOnCeiling() && this.WasOnCeilingLastFrame) {
+			this.EmitSignal(SignalName.OnCeilingExit);
+		}
+		this.WasOnCeilingLastFrame = this.IsOnCeiling();
 	}
 
     // -----------------------------------------------------------------------------------------------------------------
