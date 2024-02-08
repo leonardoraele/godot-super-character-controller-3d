@@ -2,13 +2,16 @@ using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
 
+/// <summary>
+/// Rename to InputStateTransition
+/// </summary>
 public partial class InputActionController : MotionStateController
 {
 	/// <summary>
 	/// Name of the input action to be read for this ability.
 	/// </summary>
 	[Export] public string? InputActionName;
-	[Export] public string? StateTransition;
+	[Export] public Node? StateTransition;
 	[Export] public AbilityActivationMode InputMode = AbilityActivationMode.InputIsJustPressed;
 
 	[ExportGroup("Activation Conditions")]
@@ -92,7 +95,7 @@ public partial class InputActionController : MotionStateController
 				&& this.State.StateMachine.Character.InputController.GetInputBuffer(this.InputActionName).ConsumeInput()
 			)
 		) {
-			if (string.IsNullOrEmpty(this.StateTransition)) {
+			if (this.StateTransition == null) {
 				GD.PushError("Failed to activate input action. Name: ", this.InputActionName, ". Cause: ", this.StateTransition," this.State node is not set.");
 			} else {
 				if (this.AbilityData != null) {
@@ -100,12 +103,12 @@ public partial class InputActionController : MotionStateController
 				}
 				GD.PrintS(Time.GetTicksMsec(), nameof(InputActionController), ":", "⚡", "Action triggered.", "State:", this.State.Name, "Action:", this.InputActionName, "Transition:", this.StateTransition);
 				this.CancelActionCheckActive = true;
-				this.State.StateMachine.Transition(this.StateTransition);
+				this.State.StateMachine.Transition(this.StateTransition.Name);
 			}
 		} else if (this.CancelActionCheckActive) {
-			this.CancelActionCheckActive = !string.IsNullOrEmpty(this.StateTransition)
+			this.CancelActionCheckActive = this.StateTransition != null
 				&& this.State.IsPreviousActiveState
-				&& this.State.StateMachine.CurrentState?.Name == this.StateTransition;
+				&& this.State.StateMachine.CurrentState?.Name == this.StateTransition.Name;
 			if (this.CancelActionCheckActive) {
 				if (this.AbilityData != null) {
 					this.AbilityData.AccumulatedUseTimeSec += delta;

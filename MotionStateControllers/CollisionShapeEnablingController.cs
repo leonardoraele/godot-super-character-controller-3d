@@ -43,6 +43,7 @@ public partial class CollisionShapeEnablingController : MotionStateController
 
     public override void OnEnter(MotionStateTransition transition)
     {
+		base.OnEnter(transition);
 		if (string.IsNullOrEmpty(this.CollisionShape) || this.Character.GetNode(this.CollisionShape) is not CollisionShape3D shape) {
 			throw new System.Exception($"{nameof(CollisionShapeEnablingController)}.{nameof(this.CollisionShape)} property is not set, does not exist, or is not a CollisionShape3D. State: {this.Name}");
 		}
@@ -73,6 +74,7 @@ public partial class CollisionShapeEnablingController : MotionStateController
 
 	public override void OnExit(MotionStateTransition transition)
 	{
+		base.OnExit(transition);
 		if (
 			(
 				this.OnSpaceLacking == SpaceLackingBehavior.CancelTransition

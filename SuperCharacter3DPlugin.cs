@@ -37,17 +37,23 @@ public partial class SuperCharacter3DPlugin : EditorPlugin
 
         // Motion state controllers
         string[] states = new string[] {
+            // Velocity controllers
             nameof(BasicMovementController),
-            nameof(CollisionShapeEnablingController),
             nameof(DirectionalMovementController),
-            nameof(FloorSnapController),
-            nameof(GravityController),
-            nameof(InputActionController),
-            nameof(JumpController),
-            nameof(OnFloorTransitionController),
-            nameof(OnWallTransitionController),
             nameof(TankMovementController),
-            nameof(TimeoutTransitionController),
+            nameof(GravityController),
+            nameof(JumpController),
+
+            // Misc controllers
+            nameof(CollisionShapeEnablingController),
+            nameof(FloorSnapController),
+
+            // State transitions
+            nameof(InputActionController),
+            nameof(OnFloorEventEmitter),
+            nameof(OnWallEventEmitter),
+            nameof(OnCeilingEventEmitter),
+            nameof(TimeoutEventEmitter),
         };
         foreach (string stateName in states) {
             Script script = GD.Load<Script>($"res://addons/{nameof(SuperCharacter3D)}/{nameof(MotionStateControllers)}/{stateName}.cs");
