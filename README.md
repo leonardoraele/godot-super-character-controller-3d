@@ -1,4 +1,6 @@
-# Super Platformer
+# Super Platformer (WIP)
+
+⚠ This project is still a work in progress and is missing a lot of critical features and documentation. It's not ready to be used yet.
 
 ## Installation
 
@@ -72,4 +74,5 @@ func _physics_process_state_active(delta):
 
 #### Future MotionStateControllers
 - [ ] Virtual2DMovementController <!-- Uses a Path3D as a basis for constraining the character movement in the XZ plane to simulate a 2D game in 3D world, like Mega Man X8 and Metroid Dread. The initial draft/proposal for implementation is: 1) flattening the Y position of all points in the Path3D; then 2) instead of applying velocity to the character in 3D space, calculate the velocity of the character as if it was a 2D character controller, then moving the character in the Path3D by the amount the character should move in the horizontal (XZ) axis every frame, while preserving the Y position --!>
+<!--
 -->
