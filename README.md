@@ -1,4 +1,4 @@
-# Super Platformer (WIP)
+# Super Character 3D Controller (WIP)
 
 ⚠ This project is still a work in progress and is missing a lot of critical features and documentation. It's not ready to be used yet.
 
