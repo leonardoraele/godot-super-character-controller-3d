@@ -1,3 +1,4 @@
+#nullable enable
 using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
@@ -25,11 +26,11 @@ public partial class ForwardMovementSettings : Resource
 		// Make the character face the input direction unless ForceForwardMotion is true
 		if (
 			this.InitialFacingDirection == InitialFacingDirectionEnum.InputDirection
-			&& character.InputController.MovementInput.LengthSquared() >= 0.0001f
+			&& character.InputController.RawMovementInput.LengthSquared() >= 0.0001f
 		) {
 			character.Rotation = Vector3.Up
 				* (
-					character.InputController.MovementInput.AngleTo(Vector2.Up)
+					character.InputController.RawMovementInput.AngleTo(Vector2.Down)
 					+ GodotUtil.V3ToHV2(character.GetViewport().GetCamera3D().Basis.Z * -1).AngleTo(Vector2.Up)
 					// + this.GetViewport().GetCamera3D().Rotation.Y
 				);

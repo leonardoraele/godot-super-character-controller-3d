@@ -1,3 +1,4 @@
+#nullable enable
 using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;

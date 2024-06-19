@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using Godot;
@@ -33,9 +34,17 @@ public class InputController
 		public void ProduceInput() => this.LastInputTime = Time.GetTicksMsec();
 	}
 
-	[Obsolete]
-	public Vector2 MovementInput { get; private set; }
+	/// <summary>
+	/// Current player input. +Y is forward (up), -Y is backward (down), +X is right, -X is left.
+	/// </summary>
 	public Vector2 RawMovementInput { get; private set; }
+	/// <summary>
+	/// The player input, as a 3D vector in world space, in the XZ plane. Y is always 0. It uses the camera direction to
+	/// determine the direction the player is pointing the input.
+	///
+	/// For example, if <see cref="RawMovementInput"/> is (0.5, 1) and the camera is rotated toward the +X vector, this
+	/// property will be (1, 0, 0.5).
+	/// </summary>
     public Vector3 GlobalMovementInput { get; private set; }
 	/// <summary>
 	/// Determines how the InputController deals with player directional input when there are changes in camera angle.
@@ -103,10 +112,9 @@ public class InputController
 			this.Character.MoveBackAction,
 			this.Character.MoveForwardAction
 		);
-		this.MovementInput = new Vector2(this.RawMovementInput.X, this.RawMovementInput.Y * -1);
 		if (this.CameraMode == CameraModeEnum.DynamicCamera) {
-			this.CameraRotation = this.Character.GetViewport().GetCamera3D().Rotation.Y * -1;
-			this.GlobalMovementInput = GodotUtil.HV2ToV3(this.MovementInput.Rotated(this.CameraRotation));
+			this.CameraRotation = (this.Character.GetViewport().GetCamera3D()?.Rotation.Y ?? 0) * -1;
+			this.GlobalMovementInput = GodotUtil.HV2ToV3(new Vector2(this.RawMovementInput.X, this.RawMovementInput.Y * -1).Rotated(this.CameraRotation));
 		} else {
 			if (this.RawMovementInput.LengthSquared() <= Mathf.Epsilon) {
 				this.CameraRotation = this.Character.GetViewport().GetCamera3D().Rotation.Y * -1;
@@ -115,7 +123,7 @@ public class InputController
 					this.CameraMode = CameraModeEnum.DynamicCamera;
 				}
 			} else {
-				this.GlobalMovementInput = GodotUtil.HV2ToV3(this.MovementInput.Rotated(this.CameraRotation));
+				this.GlobalMovementInput = GodotUtil.HV2ToV3(new Vector2(this.RawMovementInput.X, this.RawMovementInput.Y * -1).Rotated(this.CameraRotation));
 			}
 		}
 		foreach (var inputBuffer in this.InputBufferDict.Values) {
@@ -135,5 +143,6 @@ public class InputController
 	/// Returns the movement input relative to the camera's perspective.
 	/// </summary>
 	public Vector2 GetRelativeMovementInput()
-		=> this.MovementInput.Rotated(this.Character.GetViewport().GetCamera3D().Rotation.Y * -1);
+		=> new Vector2(this.RawMovementInput.X, this.RawMovementInput.Y * -1)
+			.Rotated(this.Character.GetViewport().GetCamera3D().Rotation.Y * -1);
 }

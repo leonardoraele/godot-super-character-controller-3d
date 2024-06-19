@@ -1,3 +1,4 @@
+#nullable enable
 using Godot;
 
 namespace Raele.SuperCharacter3D.MotionStateControllers;
@@ -61,7 +62,7 @@ public partial class DirectionalMovementSettings : Resource
 	/// </summary>
 	[Export(PropertyHint.ExpEasing)] public float HarshTurnVelocityLossFactor = 1f;
 
-	[ExportGroup("Automatic Movement")]
+	// [ExportGroup("Automatic Movement")]
 	/// <summary>
 	/// Minimum input value to consider the character is moving forward. This is used to automatically move the
 	/// character forward when the input is below this value. For example, if you set this to 0.5, the character will
@@ -72,7 +73,7 @@ public partial class DirectionalMovementSettings : Resource
 	/// a small time duration before giving control back to the player. It might also useful to implement movement in
 	/// games where the player has limited control over speed of the character, but can control the direction.
 	/// </summary>
-	[Export(PropertyHint.Range, "0,1")] public float MinForwardInput = 0; // TODO Not implemented yet
+	// [Export(PropertyHint.Range, "0,1")] public float MinForwardInput = 0; // TODO Not implemented yet
 
 	public float HarshTurnMaxAngleRad {
 		get => Mathf.DegToRad(this.HarshTurnMaxAngleDeg);

@@ -1,3 +1,4 @@
+#nullable enable
 using Godot;
 
 namespace Raele.SuperCharacter3D;
@@ -112,9 +113,6 @@ public partial class SuperCharacter3DController : CharacterBody3D
     {
         base._PhysicsProcess(delta);
 		this.PhysicsDelta = (float) delta;
-		if (Engine.IsEditorHint()) {
-			return;
-		}
     }
 
     private void UpdateLastOnFloorPosition()

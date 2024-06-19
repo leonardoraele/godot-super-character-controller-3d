@@ -1,3 +1,4 @@
+#nullable enable
 #if TOOLS
 using Godot;
 using Raele.SuperCharacter3D.MotionStateControllers;
