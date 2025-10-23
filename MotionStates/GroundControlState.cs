@@ -1,6 +1,6 @@
 namespace Raele.SuperPlatformer;
 
-public partial class OnFootState : BaseGroundedState
+public partial class GroundControlState : GroundedState
 {
     public override void OnProcessState(float delta)
     {

@@ -1,8 +1,8 @@
 namespace Raele.SuperPlatformer;
 
-public partial class JumpWindupState : BaseGroundedState
+public partial class JumpWindupState : GroundedState
 {
-    public override void OnEnter(BaseMotionState.TransitionInfo transition)
+    public override void OnEnter(MotionState.TransitionInfo transition)
     {
         base.OnEnter(transition);
         if (this.Character.JumpSettings.JumpWindupDurationMs <= 0) {

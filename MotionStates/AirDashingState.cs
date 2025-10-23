@@ -1,14 +1,14 @@
 namespace Raele.SuperPlatformer;
 
-public partial class AirDashingState : BaseAirState
+public partial class AirDashingState : OnAirState
 {
-    public override void OnExit(BaseMotionState.TransitionInfo transition)
+    public override void OnExit(MotionState.TransitionInfo transition)
     {
         // TODO // FIXME There's a problem here. Even though we are preventing the player from perfoming a dash over
         // another when CanCancelDash is false, the dash input will already have been consumed, which means the player
         // can't buffer dash inputs to perform a dash as soon as possible.
         base.OnExit(transition);
-        if (transition.NextState != nameof(AirDashingState) || (this.Character.DashSettings?.VariableDashLength ?? true)) {
+        if (transition.NextStateName != nameof(AirDashingState) || (this.Character.DashSettings?.VariableDashLength ?? true)) {
             transition.Cancel();
         }
     }

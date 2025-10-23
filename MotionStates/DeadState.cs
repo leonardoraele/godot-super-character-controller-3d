@@ -1,4 +1,4 @@
 namespace Raele.SuperPlatformer;
 
-public partial class DeadState : BaseMotionState
+public partial class DeadState : MotionState
 {}

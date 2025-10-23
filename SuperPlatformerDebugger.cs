@@ -51,7 +51,7 @@ public partial class SuperPlatformerDebugger : Control
 		if (this.Character.IsOnWall()) {
 			this.DrawLine(this.Character.Velocity.Normalized() * 32, this.Character.Velocity.Normalized() * 32 + this.Character.GetWallNormal() * 8, Colors.White, 1, true);
 		}
-		this.DrawString(ThemeDB.FallbackFont, Vector2.Down * 8, this.Character.State?.Name ?? "null state", default, default, 8, Colors.White);
+		this.DrawString(ThemeDB.FallbackFont, Vector2.Down * 8, this.Character.CurrentState?.Name ?? "null state", default, default, 8, Colors.White);
     }
 
     public override void _Process(double delta)

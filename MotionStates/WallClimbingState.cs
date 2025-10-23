@@ -10,7 +10,7 @@ public partial class WallClimbingState : OnWallState
 		) {
 			this.Character.TransitionMotionState<WallSlidingState>();
 		} else if (this.Character.IsOnFloor() && this.Character.WallMotionSettings.AutomaticallyTransitionToFloor) {
-			this.Character.TransitionMotionState<OnFootState>();
+			this.Character.TransitionMotionState<GroundControlState>();
 		}
     }
 

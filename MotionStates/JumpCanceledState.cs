@@ -1,6 +1,6 @@
 namespace Raele.SuperPlatformer;
 
-public partial class JumpCanceledState : BaseMotionState
+public partial class JumpCanceledState : MotionState
 {
     public override void OnProcessState(float delta)
     {

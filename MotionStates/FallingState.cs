@@ -3,7 +3,7 @@ using Godot;
 
 namespace Raele.SuperPlatformer;
 
-public partial class FallingState : BaseAirState
+public partial class FallingState : OnAirState
 {
     public override void OnProcessState(float delta)
     {

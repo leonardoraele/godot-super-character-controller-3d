@@ -3,7 +3,7 @@ using Godot.Collections;
 
 namespace Raele.SuperPlatformer;
 
-public partial class InteractingState : BaseMotionState
+public partial class InteractingState : MotionState
 {
 	public double DurationSec = 1;
 	public string? Hint;
@@ -31,7 +31,7 @@ public partial class InteractingState : BaseMotionState
 			if (this.OnFinished != null) {
 				this.OnFinished.Value.Call();
 			}
-			if (this.Character.State == this && this.Ended) {
+			if (this.Character.CurrentState == this && this.Ended) {
 				this.Character.ResetState();
 			}
 		}

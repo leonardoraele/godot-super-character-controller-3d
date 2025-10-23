@@ -2,13 +2,13 @@ using Godot;
 
 namespace Raele.SuperPlatformer;
 
-public partial class GroundDashingState : BaseGroundedState
+public partial class GroundDashingState : GroundedState
 {
-    public override void OnExit(BaseMotionState.TransitionInfo transition)
+    public override void OnExit(MotionState.TransitionInfo transition)
     {
 		base.OnExit(transition);
 		if (
-			transition.NextState == nameof(FallingState)
+			transition.NextStateName == nameof(FallingState)
 			&& (this.Character.DashSettings?.GroundDashIgnoresGravity ?? false)
 		) {
 			transition.Cancel();
@@ -19,10 +19,10 @@ public partial class GroundDashingState : BaseGroundedState
     {
         base.OnProcessState(delta);
 		if (this.DurationActiveMs > (this.Character.DashSettings?.DashMaxDurationMs ?? 0)) {
-			this.Character.TransitionMotionState<OnFootState>();
+			this.Character.TransitionMotionState<GroundControlState>();
 		} else if (this.Character.DashSettings != null && this.Character.DashSettings.VariableDashLength) {
 			if (!Input.IsActionPressed(this.Character.InputSettings.DashAction)) {
-				this.Character.TransitionMotionState<OnFootState>();
+				this.Character.TransitionMotionState<GroundControlState>();
 			} else if (this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
 				this.Character.TransitionMotionState<JumpingState>();
 			}

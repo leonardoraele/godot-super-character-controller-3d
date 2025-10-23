@@ -3,7 +3,7 @@ using Godot;
 
 namespace Raele.SuperPlatformer;
 
-public partial class JumpingState : BaseAirState
+public partial class JumpingState : OnAirState
 {
     public ulong? TimeHitCeiling;
 

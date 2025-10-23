@@ -4,37 +4,7 @@ using System.Collections.Generic;
 
 namespace Raele.SuperPlatformer;
 
-// TODO Make presets for:
-// P1:
-// - Mario Bros
-// - Mega Man 3
-// - Celeste
-// - Super Meat Boy
-// - Shovel Knight
-// P2:
-// - Castlevania
-// - Spelunky
-// - Super Metroid
-// - Super Mario World
-// - Mega Man X
-// - Hollow Knight
-// - Prince of Persia
-// - Limbo
-// P3:
-// - Super Mario World 2: Yoshi's Island
-// - Mega Man 11
-// - Mega Man X4
-// - Sonic
-// - Terraria
-// - Castlevania: Symphony of the Night
-// P4:
-// - Ori and the Blind Forest
-// - Ninja Gaoden
-// - Mark of the Ninja
-// - Dead Cells
-// - Blasphemous
-public partial class SuperPlatformerController : CharacterBody2D
-{
+public partial class SuperPlatformerController : CharacterBody2D {
 	// -----------------------------------------------------------------------------------------------------------------
 	// EXPORTED FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
@@ -81,9 +51,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 	[Export] public ulong CeilingSlideTimeMs { get; private set; } = 150;
 	/// <summary>
 	/// This property determines how much time, in miliseconds, the player must hold a directional input in the opposite
-	/// direction to a wall to let go of that wall during a wall climb or wall slide. i.e. If this property is set to a
-	/// positive value, the player will let go of a wall climb or wall slide only if they press a directional input in
-	/// the direction opposite to the wall for at least this much time.
+	/// direction to a wall to let go of that wall during a wall climb or wall slide.
 	///
 	/// This property is meant to be used as a prevention against accidental input mistakes by making so that the
 	/// character will remain stuck to the wall even if the player press a directional input that would normally cause
@@ -96,13 +64,31 @@ public partial class SuperPlatformerController : CharacterBody2D
 	/// If this property is set to -1, the character must hold the directional input toward the wall to remain stuck to
 	/// it. Releasing the directional input will make the character let go of the wall.
 	/// </summary>
+	[Obsolete("Use WallClimbDirectionalInputDeadZone instead")]
 	[Export] public int WallDropPreventionLeniencyMs { get; private set; } = 150;
+	/// <summary>
+	/// This property determines the minimum directional input value the player must input in the opposite direction to
+	/// a wall to let go of that wall during a wall climb or wall slide.
+	///
+	/// This property is meant to be used as a prevention against accidental input mistakes by making so that the
+	/// character will remain stuck to the wall even if the player accidentaly inputs a small directional input value
+	/// that would normally cause them to drop off the wall. Instead, small input values will be ignored.
+	///
+	/// If this property is set to 0, the player will let go of the wall as soon as the player presses a directional
+	/// input in a direction opposite to the wall they are climbing or sliding. They will still remain stuck to the wall
+	/// if they don't enter any horizontal directional input.
+	///
+	/// If this property is set to a negative value, the character must hold that much directional input toward the wall
+	/// to remain stuck to it. Releasing the directional input will make the character let go of the wall.
+	/// </summary>
+	[Export(PropertyHint.Range, "-1,1,0.01")]
+	public float WallClimbDirectionalInputDeadZone { get; private set; } = 0.05f;
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// SIGNALS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	[Signal] public delegate void MotionStateChangedEventHandler(BaseMotionState newState, BaseMotionState? oldState);
+	[Signal] public delegate void MotionStateChangedEventHandler(MotionState newState, MotionState? oldState);
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// FIELDS
@@ -112,7 +98,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 	/// This is the current motion state of the character.
 	/// Use TransitionState method to change the state.
 	/// </summary>
-	public BaseMotionState? State { get; private set; } = null;
+	public MotionState? CurrentState { get; private set; } = null;
 	/// <summary>
 	/// This is the number of dashes performed by the character so far while they are in the air. By default, it is
 	/// incremented every time the character starts a dash and is reset when the character lands on the floor.
@@ -120,8 +106,8 @@ public partial class SuperPlatformerController : CharacterBody2D
 	public int AirDashesPerformedCounter = 0;
 	public SuperPlatformerInputController InputController { get; private set; } = null!; // Initialized on _Ready
 	public Vector2 LastOnFloorPosition { get; private set; }
+	private readonly Dictionary<string, MotionState> StateDict = [];
 	private int _facingDirection = 0;
-	public Dictionary<string, BaseMotionState> StateDict = new Dictionary<string, BaseMotionState>();
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// PROPERTIES
@@ -129,6 +115,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 
 	public bool IsFacingLeft => this.FacingDirection < 0;
 	public bool IsFacingRight => this.FacingDirection > 0;
+	public bool IsFacingNeutral => this.FacingDirection == 0;
 	/// <summary>
 	/// Determines the direction the character is facing. Any value lower than 0 means the character is facing left,
 	/// any value greater than 0 means the character is facing right, and 0 means the character is not facing any.
@@ -143,10 +130,8 @@ public partial class SuperPlatformerController : CharacterBody2D
 	// METHODS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	public override void _Ready()
-	{
+	public override void _Ready() {
 		base._Ready();
-		this.SetupCharacterBody2D();
 		this.RegisterBuiltinMotionStates();
 		this.InputController = new SuperPlatformerInputController(this);
 		this.InputSettings ??= new Platformer2DInputSettings();
@@ -156,132 +141,134 @@ public partial class SuperPlatformerController : CharacterBody2D
 		this.ResetState();
 	}
 
-	public override void _EnterTree()
-	{
+	public override void _EnterTree() {
 		base._EnterTree();
 		foreach (Node child in this.GetChildren()) {
 			this.OnNodeEnteredTree(child);
 		}
 	}
 
-	private void RegisterBuiltinMotionStates()
-	{
+	private void RegisterBuiltinMotionStates() {
 		this.ChildEnteredTree += this.OnNodeEnteredTree;
 		this.ChildExitingTree += this.OnNodeExitingTree;
-		this.AddChild(new OnFootState() { Name = nameof(OnFootState) });
-		this.AddChild(new FallingState() { Name = nameof(FallingState) });
-		this.AddChild(new WallClimbingState() { Name = nameof(WallClimbingState) });
-		this.AddChild(new WallSlidingState() { Name = nameof(WallSlidingState) });
-		this.AddChild(new JumpCanceledState() { Name = nameof(JumpCanceledState) });
-		this.AddChild(new GroundDashingState() { Name = nameof(GroundDashingState) });
 		this.AddChild(new AirDashingState() { Name = nameof(AirDashingState) });
 		this.AddChild(new DeadState() { Name = nameof(DeadState) });
+		this.AddChild(new FallingState() { Name = nameof(FallingState) });
+		this.AddChild(new GroundControlState() { Name = nameof(GroundControlState) });
+		this.AddChild(new GroundDashingState() { Name = nameof(GroundDashingState) });
 		this.AddChild(new InteractingState() { Name = nameof(InteractingState) });
+		this.AddChild(new JumpCanceledState() { Name = nameof(JumpCanceledState) });
 		this.AddChild(new JumpingState() { Name = nameof(JumpingState) });
 		this.AddChild(new JumpWindupState() { Name = nameof(JumpWindupState) });
 		this.AddChild(new LandingRecoveryState() { Name = nameof(LandingRecoveryState) });
-		this.AddChild(new LandingRecoveryState() { Name = nameof(LandingRecoveryState) });
+		this.AddChild(new WallClimbingState() { Name = nameof(WallClimbingState) });
+		this.AddChild(new WallSlidingState() { Name = nameof(WallSlidingState) });
 	}
 
-	private void OnNodeEnteredTree(Node node)
-	{
-		if (node is BaseMotionState state) {
+	private void OnNodeEnteredTree(Node node) {
+		if (node is MotionState state) {
 			this.StateDict[state.Name] = state;
 		}
 	}
 
-	private void OnNodeExitingTree(Node node)
-	{
-		if (node is BaseMotionState state) {
+	private void OnNodeExitingTree(Node node) {
+		if (node is MotionState state) {
 			this.StateDict.Remove(state.Name);
 		}
 	}
 
-	private void SetupCharacterBody2D()
-	{
-		// Any change that is made to the CharacterBody2D should be properly logged to the user.
-		if (this.MotionMode != MotionModeEnum.Grounded) {
-			GD.PushWarning(nameof(SuperPlatformerController), "expects CharacterBody2D to be in Grounded mode. Setting it now.");
-			this.MotionMode = MotionModeEnum.Grounded;
-		}
-	}
-
-	public override void _Process(double delta)
-	{
+	public override void _Process(double delta) {
 		base._Process(delta);
 		this.InputController.Update();
 		this.UpdateLastOnFloorPosition();
 		this.UpdateFacing();
-		this.State?.OnProcessState((float) delta);
+		this.CurrentState?.OnProcessState((float)delta);
 	}
 
 	private void UpdateLastOnFloorPosition()
 	{
-		if (this.IsOnFloor() && this.Position.DistanceSquaredTo(this.LastOnFloorPosition) > 64) {
+		if (this.IsOnFloor() && this.Position.DistanceSquaredTo(this.LastOnFloorPosition) > 64)
+		{
 			this.LastOnFloorPosition = this.Position;
 		}
 	}
 
 	private void UpdateFacing()
 	{
-		if (Math.Abs(this.Velocity.X) > 0.01f)
+		if (
+			Math.Abs(this.Velocity.X) > Mathf.Epsilon
+			&& Math.Abs(this.InputController.MovementInput.X) > Mathf.Epsilon
+			&& Math.Sign(this.Velocity.X) == Math.Sign(this.InputController.MovementInput.X)
+		)
 		{
-			this.FacingDirection = this.Velocity.X > 0 ? 1 : -1;
+			this.FacingDirection = Math.Sign(this.Velocity.X);
 		}
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
 		base._PhysicsProcess(delta);
-		this.State?.OnPhysicsProcessState((float) delta);
+		this.CurrentState?.OnPhysicsProcessState((float)delta);
 	}
 
-	public void TransitionMotionState<T>(Variant? data = null) where T : BaseMotionState
+	public void TransitionMotionState<T>(Variant? data = null) where T : MotionState
 	{
 		this.TransitionMotionState(typeof(T).Name, data);
 	}
 
 	public void TransitionMotionState(string nextStateName, Variant? data = null)
 	{
-		if (!this.StateDict.TryGetValue(nextStateName, out BaseMotionState? nextState)) {
+		if (!this.StateDict.TryGetValue(nextStateName, out MotionState? nextState))
+		{
 			throw new Exception($"Failed to transition to motion state \"{nextStateName}\". Cause: State not found. Did you forget to add it as a child node of {nameof(SuperPlatformerController)}?");
 		}
-		BaseMotionState? previousState = this.State;
-		if (previousState != null) {
-			try {
+		MotionState? previousState = this.CurrentState;
+		if (previousState != null)
+		{
+			try
+			{
 				GD.PrintS(nameof(SuperPlatformerController), "Exiting state:", previousState.Name);
-				previousState.OnExit(new BaseMotionState.TransitionInfo() {
-					PreviousState = previousState.Name,
-					NextState = nextStateName,
+				previousState.OnExit(new MotionState.TransitionInfo()
+				{
+					PreviousStateName = previousState.Name,
+					NextStateName = nextStateName,
 					Cancel = () => nextState = null,
 					Data = data,
 				});
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				GD.PushError(e);
 			}
 		}
-		if (nextState == null || this.State != previousState) {
+		if (nextState == null || this.CurrentState != previousState)
+		{
 			return;
 		}
-		try {
+		try
+		{
 			GD.PrintS(nameof(SuperPlatformerController), "Entering state:", nextState.Name);
-			nextState.OnEnter(new BaseMotionState.TransitionInfo() {
-				PreviousState = this.State?.Name,
-				NextState = nextState.Name,
+			nextState.OnEnter(new MotionState.TransitionInfo()
+			{
+				PreviousStateName = this.CurrentState?.Name,
+				NextStateName = nextState.Name,
 				Cancel = () => nextState = null,
 				Data = data,
 			});
-		} catch(Exception e) {
+		}
+		catch (Exception e)
+		{
 			GD.PushError(e);
-			this.State = null;
+			this.CurrentState = null;
 			this.ResetState();
 			return;
 		}
-		if (nextState == null || this.State != previousState) {
+		if (nextState == null || this.CurrentState != previousState)
+		{
 			return;
 		}
-		this.State = nextState;
-		this.EmitSignal(SignalName.MotionStateChanged, this.State, previousState!);
+		this.CurrentState = nextState;
+		this.EmitSignal(SignalName.MotionStateChanged, this.CurrentState, previousState!);
 	}
 
 	/// <summary>
@@ -289,19 +276,19 @@ public partial class SuperPlatformerController : CharacterBody2D
 	/// </summary>
 	public void ResetState()
 	{
-		if (this.IsOnFloor())
+		if (this.MotionMode == MotionModeEnum.Floating)
 		{
-			this.TransitionMotionState<OnFootState>();
-		}
-		else
-		{
+			this.TransitionMotionState<FloatingState>();
+		} else if (this.IsOnFloor()) {
+			this.TransitionMotionState<GroundControlState>();
+		} else {
 			this.TransitionMotionState<FallingState>();
 		}
 	}
 
 	public void Accelerate(Vector2 targetVelocity, Vector2 acceleration)
 	{
-		this.Velocity = SuperPlatformerController.ApplyAcceleration(this.Velocity, targetVelocity, acceleration);
+		this.Velocity = SuperPlatformerController.MoveToward(this.Velocity, targetVelocity, acceleration);
 	}
 
 	/// <summary>
@@ -316,13 +303,9 @@ public partial class SuperPlatformerController : CharacterBody2D
 	/// This method only changes the character's Velocity. You still have to call <code>MoveAndSlide</code> or similar
 	/// to actually move the character.
 	/// </summary>
-	public void Accelerate(
-		float targetVelocityX,
-		float targetVelocityY,
-		float accelerationX = float.PositiveInfinity,
-		float accelerationY = float.PositiveInfinity
-	) {
-		this.Velocity = SuperPlatformerController.ApplyAcceleration(
+	public void Accelerate(float targetVelocityX, float targetVelocityY, float accelerationX, float accelerationY)
+	{
+		this.Velocity = SuperPlatformerController.MoveToward(
 			this.Velocity.X,
 			this.Velocity.Y,
 			targetVelocityX,
@@ -338,7 +321,7 @@ public partial class SuperPlatformerController : CharacterBody2D
 	public void AccelerateX(float targetVelocityX, float accelerationX)
 	{
 		this.Velocity = new Vector2(
-			SuperPlatformerController.ApplyAcceleration(this.Velocity.X, targetVelocityX, accelerationX),
+			Mathf.MoveToward(this.Velocity.X, targetVelocityX, accelerationX),
 			this.Velocity.Y
 		);
 	}
@@ -350,13 +333,13 @@ public partial class SuperPlatformerController : CharacterBody2D
 	{
 		this.Velocity = new Vector2(
 			this.Velocity.X,
-			SuperPlatformerController.ApplyAcceleration(this.Velocity.Y, targetVelocityY, accelerationY)
+			Mathf.MoveToward(this.Velocity.Y, targetVelocityY, accelerationY)
 		);
 	}
 
-	public static Vector2 ApplyAcceleration(Vector2 currentVelocity, Vector2 targetVelocity, Vector2 acceleration)
+	public static Vector2 MoveToward(Vector2 currentVelocity, Vector2 targetVelocity, Vector2 acceleration)
 	{
-		return SuperPlatformerController.ApplyAcceleration(
+		return SuperPlatformerController.MoveToward(
 			currentVelocity.X,
 			currentVelocity.Y,
 			targetVelocity.X,
@@ -366,22 +349,11 @@ public partial class SuperPlatformerController : CharacterBody2D
 		);
 	}
 
-	public static Vector2 ApplyAcceleration(
-		float currentVelocityX,
-		float currentVelocityY,
-		float targetVelocityX,
-		float targetVelocityY,
-		float accelerationX,
-		float accelerationY
-	) {
-		return new Vector2(
-			SuperPlatformerController.ApplyAcceleration(currentVelocityX, targetVelocityX, accelerationX),
-			SuperPlatformerController.ApplyAcceleration(currentVelocityY, targetVelocityY, accelerationY)
-		);
-	}
-
-	public static float ApplyAcceleration(float currentVelocity, float targetVelocity, float acceleration)
+	public static Vector2 MoveToward(float fromX, float fromY, float toX,float toY, float deltaX, float deltaY)
 	{
-		return Mathf.MoveToward(currentVelocity, targetVelocity, acceleration);
+		return new Vector2(
+			Mathf.MoveToward(fromX, toX, deltaX),
+			Mathf.MoveToward(fromY, toY, deltaY)
+		);
 	}
 }

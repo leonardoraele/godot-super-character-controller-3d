@@ -1,13 +1,13 @@
 namespace Raele.SuperPlatformer;
 
-public partial class LandingRecoveryState : BaseGroundedState
+public partial class LandingRecoveryState : GroundedState
 {
-    public override void OnEnter(BaseMotionState.TransitionInfo transition)
+    public override void OnEnter(MotionState.TransitionInfo transition)
     {
         base.OnEnter(transition);
 		if (this.Character.JumpSettings.LandingRecoveryDurationMs <= 0)
         {
-			this.Character.TransitionMotionState<OnFootState>();
+			this.Character.TransitionMotionState<GroundControlState>();
 		}
     }
 
@@ -15,7 +15,7 @@ public partial class LandingRecoveryState : BaseGroundedState
     {
         base.OnProcessState(delta);
         if (this.DurationActiveMs > this.Character.JumpSettings.LandingRecoveryDurationMs) {
-            this.Character.TransitionMotionState<OnFootState>();
+            this.Character.TransitionMotionState<GroundControlState>();
         } else if (
             this.Character.JumpSettings.DashingCancelsLandingRecovery
             && this.Character.InputController.DashInputBuffer.ConsumeInput()

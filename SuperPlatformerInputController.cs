@@ -3,8 +3,7 @@ using Godot;
 
 namespace Raele.SuperPlatformer;
 
-public class SuperPlatformerInputController
-{
+public class SuperPlatformerInputController {
 	public class InputBuffer {
 		public ulong LastInputTime { get; private set; } = 0;
 		public bool IsInputBuffered => this.LastInputTime >= Time.GetTicksMsec() - this.InputBufferDurationMs();
@@ -15,14 +14,12 @@ public class SuperPlatformerInputController
 		// use (of if it's suppoerted) build-time variables.
 		public Func<ulong> InputBufferDurationMs { get; init; } = () => 0;
 		public Func<string> InputActionName { get; init; } = () => "";
-		public bool ConsumeInput()
-		{
+		public bool ConsumeInput() {
             bool result = this.IsInputBuffered;
 			this.LastInputTime = 0;
 			return result;
 		}
-		public void Update()
-		{
+		public void Update() {
 			if (Input.IsActionJustPressed(this.InputActionName())) {
 				this.ProduceInput();
 			}
@@ -30,8 +27,6 @@ public class SuperPlatformerInputController
 		public void ProduceInput() => this.LastInputTime = Time.GetTicksMsec();
 	}
 
-	[Obsolete("Use MovementInput instead")]
-	public float HorizontalMovement => this.MovementInput.X;
 	public Vector2 MovementInput { get; private set; }
 	public InputBuffer JumpInputBuffer { get; private set; }
 	public InputBuffer DashInputBuffer { get; private set; }
@@ -56,7 +51,7 @@ public class SuperPlatformerInputController
 	public void Update()
 	{
 		if (this.EnabledUntilTime > 0 && Time.GetTicksMsec() >= this.EnabledUntilTime) {
-			this.Enabled = !this.Enabled;
+			this.Enabled = false;
 			this.EnabledUntilTime = 0;
 		}
 		if (!this.Enabled) {
