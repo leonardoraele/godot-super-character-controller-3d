@@ -4,34 +4,31 @@
 These are special states bc the user must implement their own logic for when (if ever) to transition to them.
 No other built-in state will ever transition to them.
 
-## DeadState
-This state prevents the player from controlling the character and, optionally, turns the character into a physics body.
+## StaticState
+This state prevents the player from controlling the character and, optionally, turns gravity off. This can be used to
+represent the character being dead, being hit-stunned, or performing some action that disallows it to move, like
+attacking, picking an item, opening a door a chest, operating a lever, etc.
 
-## Hit
-This state prevents the player from controlling the character for a brief duration and, optionally, moves the character
-slightly.
+This state can only be activated or deactivated by other scripts.
 
-## Attacking
-This state limits or reduces the player's control over the character for a short duration and, optionally, perform short
-movements.
+## FloatingState
+This state can be used to simulate flying, swimming, zero gravity, mairio-like fence climbing, Ori-like burrowing, and
+other similar mechanics that allow the character to move in all directions.
 
-## AirAttacking
-Same as Attacking, but the character is in the air.
+This state can only be activated or deactivated by other scripts.
 
-## Floating
-This state can be used to simulate flying, swimming, zero gravity, Ori-like burrowing, or any other similar mechanic
-that allows the character to move in all directions.
-
-## Ledge Grabbing
+## LedgeGrabbingState
 If the character touches the wall while they are at a certain height difference from a floor on top of that wall, they
 grab the edge of the floor and climb to the top.
 
-## Ladder Climbing
-Character climbs a vertical ladder up or down
+## LadderClimbingState
+Character climbs a vertical ladder or rope, up or down.
 
-## Gliding
-Character can slow down the fall
+This state can only be activated or deactivated by other scripts.
 
-## Interacting
-The character is interacting with the world. They might be opening a door, grabbing an item on the floor, operating a
-lever, or anything else that requires them to remain still for a short time.
+## GlidingState
+Character can slow down the fall.
+
+The settings determine whether it is triggered by holding the jump input action or by pressing a defined input action
+during the fall. Settings also determine whether the state ends when the input action is released or not. (if not, then
+it ends when jump or dash input actions is pressed)
