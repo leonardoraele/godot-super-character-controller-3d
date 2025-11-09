@@ -152,11 +152,9 @@ public partial class SuperPlatformerController : CharacterBody2D {
 		this.ChildEnteredTree += this.OnNodeEnteredTree;
 		this.ChildExitingTree += this.OnNodeExitingTree;
 		this.AddChild(new AirDashingState() { Name = nameof(AirDashingState) });
-		this.AddChild(new DeadState() { Name = nameof(DeadState) });
 		this.AddChild(new FallingState() { Name = nameof(FallingState) });
 		this.AddChild(new GroundControlState() { Name = nameof(GroundControlState) });
 		this.AddChild(new GroundDashingState() { Name = nameof(GroundDashingState) });
-		this.AddChild(new InteractingState() { Name = nameof(InteractingState) });
 		this.AddChild(new JumpCanceledState() { Name = nameof(JumpCanceledState) });
 		this.AddChild(new JumpingState() { Name = nameof(JumpingState) });
 		this.AddChild(new JumpWindupState() { Name = nameof(JumpWindupState) });

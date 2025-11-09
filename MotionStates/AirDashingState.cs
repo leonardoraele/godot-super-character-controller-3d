@@ -8,7 +8,10 @@ public partial class AirDashingState : OnAirState
         // another when CanCancelDash is false, the dash input will already have been consumed, which means the player
         // can't buffer dash inputs to perform a dash as soon as possible.
         base.OnExit(transition);
-        if (transition.NextStateName != nameof(AirDashingState) || (this.Character.DashSettings?.VariableDashLength ?? true)) {
+        if (
+            transition.NextStateName != nameof(AirDashingState)
+            || (this.Character.DashSettings?.VariableDashLength ?? true)
+        ) {
             transition.Cancel();
         }
     }
@@ -26,7 +29,10 @@ public partial class AirDashingState : OnAirState
     {
         base.OnPhysicsProcessState(delta);
         (float velocityX, float accelerationX) = this.Character.DashSettings != null
-            ? (this.Character.DashSettings.DashMaxSpeedPxPSec * this.Character.FacingDirection, this.Character.DashSettings.DashAccelerationPxPSecSq * delta)
+            ? (
+                this.Character.DashSettings.DashMaxSpeedPxPSec * this.Character.FacingDirection,
+                this.Character.DashSettings.DashAccelerationPxPSecSq * delta
+            )
             : this.CalculateHorizontalOnFootPhysics(delta);
         (float velocityY, float accelerationY) = this.Character.DashSettings?.AirDashIgnoresGravity == true
             ? (0, float.PositiveInfinity)

@@ -3,7 +3,7 @@ using Godot;
 
 namespace Raele.SuperPlatformer;
 
-public abstract partial class MotionState : Node {
+public partial class MotionState : Node {
 	public record TransitionInfo {
 		public string? PreviousStateName { get; init; }
 		public required string NextStateName { get; init; }

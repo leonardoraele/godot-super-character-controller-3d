@@ -91,6 +91,11 @@ public partial class Platformer2DJumpSettings : Resource
 	/// using the JumpDelayDurationMs option and want the character completely still for the jump windup animation.
 	/// </summary>
 	[Export] public bool JumpingCancelsMomentum { get; private set; } = false;
+	// /// <summary>
+	// /// The minimum downward speed the character must be falling at when it lands on the ground in order to require
+	// /// recovery time before being able to move and perform other actions.
+	// /// </summary>
+	// [Export] public float MinimumFallSpeedToRequireRecoveryPxPSec = 400f; // TODO
 	/// <summary>
 	/// This is the minimum downward Speed the character must be falling at to activate the Landing Recovery state.
 	/// Set this to 0 to make the landing recovery activate regardless of the character's speed.
