@@ -1,7 +1,7 @@
 using Godot;
 using Godot.Collections;
 
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
 public partial class InteractingState : MotionState
 {

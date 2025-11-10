@@ -1,9 +1,9 @@
 using System;
 using Godot;
 
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
-public class SuperPlatformerInputController {
+public class SuperCharacterController2DInputManager {
 	public class InputBuffer {
 		public ulong LastInputTime { get; private set; } = 0;
 		public bool IsInputBuffered => this.LastInputTime >= Time.GetTicksMsec() - this.InputBufferDurationMs();
@@ -33,9 +33,9 @@ public class SuperPlatformerInputController {
 
 	public bool Enabled = true;
 	private ulong EnabledUntilTime = 0;
-	private SuperPlatformerController Character;
+	private SuperCharacterController2D Character;
 
-	public SuperPlatformerInputController(SuperPlatformerController character)
+	public SuperCharacterController2DInputManager(SuperCharacterController2D character)
 	{
 		this.Character = character;
 		this.JumpInputBuffer = new InputBuffer() {

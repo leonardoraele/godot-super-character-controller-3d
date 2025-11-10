@@ -2,9 +2,9 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
-public partial class SuperPlatformerController : CharacterBody2D {
+public partial class SuperCharacterController2D : CharacterBody2D {
 	// -----------------------------------------------------------------------------------------------------------------
 	// EXPORTED FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ public partial class SuperPlatformerController : CharacterBody2D {
 	/// incremented every time the character starts a dash and is reset when the character lands on the floor.
 	/// </summary>
 	public int AirDashesPerformedCounter = 0;
-	public SuperPlatformerInputController InputController { get; private set; } = null!; // Initialized on _Ready
+	public SuperCharacterController2DInputManager InputController { get; private set; } = null!; // Initialized on _Ready
 	public Vector2 LastOnFloorPosition { get; private set; }
 	private readonly Dictionary<string, MotionState> StateDict = [];
 	private int _facingDirection = 0;
@@ -133,7 +133,7 @@ public partial class SuperPlatformerController : CharacterBody2D {
 	public override void _Ready() {
 		base._Ready();
 		this.RegisterBuiltinMotionStates();
-		this.InputController = new SuperPlatformerInputController(this);
+		this.InputController = new SuperCharacterController2DInputManager(this);
 		this.InputSettings ??= new Platformer2DInputSettings();
 		this.MovementSettings ??= new Platformer2DMovementSettings();
 		this.JumpSettings ??= new Platformer2DJumpSettings();
@@ -218,14 +218,14 @@ public partial class SuperPlatformerController : CharacterBody2D {
 	{
 		if (!this.StateDict.TryGetValue(nextStateName, out MotionState? nextState))
 		{
-			throw new Exception($"Failed to transition to motion state \"{nextStateName}\". Cause: State not found. Did you forget to add it as a child node of {nameof(SuperPlatformerController)}?");
+			throw new Exception($"Failed to transition to motion state \"{nextStateName}\". Cause: State not found. Did you forget to add it as a child node of {nameof(SuperCharacterController2D)}?");
 		}
 		MotionState? previousState = this.CurrentState;
 		if (previousState != null)
 		{
 			try
 			{
-				GD.PrintS(nameof(SuperPlatformerController), "Exiting state:", previousState.Name);
+				GD.PrintS(nameof(SuperCharacterController2D), "Exiting state:", previousState.Name);
 				previousState.OnExit(new MotionState.TransitionInfo()
 				{
 					PreviousStateName = previousState.Name,
@@ -245,7 +245,7 @@ public partial class SuperPlatformerController : CharacterBody2D {
 		}
 		try
 		{
-			GD.PrintS(nameof(SuperPlatformerController), "Entering state:", nextState.Name);
+			GD.PrintS(nameof(SuperCharacterController2D), "Entering state:", nextState.Name);
 			nextState.OnEnter(new MotionState.TransitionInfo()
 			{
 				PreviousStateName = this.CurrentState?.Name,
@@ -286,7 +286,7 @@ public partial class SuperPlatformerController : CharacterBody2D {
 
 	public void Accelerate(Vector2 targetVelocity, Vector2 acceleration)
 	{
-		this.Velocity = SuperPlatformerController.MoveToward(this.Velocity, targetVelocity, acceleration);
+		this.Velocity = SuperCharacterController2D.MoveToward(this.Velocity, targetVelocity, acceleration);
 	}
 
 	/// <summary>
@@ -303,7 +303,7 @@ public partial class SuperPlatformerController : CharacterBody2D {
 	/// </summary>
 	public void Accelerate(float targetVelocityX, float targetVelocityY, float accelerationX, float accelerationY)
 	{
-		this.Velocity = SuperPlatformerController.MoveToward(
+		this.Velocity = SuperCharacterController2D.MoveToward(
 			this.Velocity.X,
 			this.Velocity.Y,
 			targetVelocityX,
@@ -337,7 +337,7 @@ public partial class SuperPlatformerController : CharacterBody2D {
 
 	public static Vector2 MoveToward(Vector2 currentVelocity, Vector2 targetVelocity, Vector2 acceleration)
 	{
-		return SuperPlatformerController.MoveToward(
+		return SuperCharacterController2D.MoveToward(
 			currentVelocity.X,
 			currentVelocity.Y,
 			targetVelocity.X,

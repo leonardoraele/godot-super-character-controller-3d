@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
 public partial class OnWallState : MotionState
 {

@@ -1,17 +1,17 @@
 using System;
 using Godot;
 
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
-public partial class SuperPlatformerDebugger : Control
+public partial class SuperCharacterController2DDebugger : Control
 {
 	[Export] private string ToggleVisibilityInputAction = "ui_menu";
 
-    private SuperPlatformerController Character = null!;
+    private SuperCharacterController2D Character = null!;
 
     public override void _Ready()
     {
-		if (this.GetParent() is SuperPlatformerController characterController) {
+		if (this.GetParent() is SuperCharacterController2D characterController) {
 			this.Character = characterController;
 		} else {
 			GD.PushWarning(

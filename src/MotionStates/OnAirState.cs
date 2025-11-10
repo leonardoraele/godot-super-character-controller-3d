@@ -1,4 +1,4 @@
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
 public abstract partial class OnAirState : MotionState
 {

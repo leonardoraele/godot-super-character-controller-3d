@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
 [GlobalClass]
 public partial class Platformer2DMovementSettings : Resource

@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace Raele.SuperPlatformer;
+namespace Raele.SuperCharacterController2D;
 
 public partial class MotionState : Node {
 	public record TransitionInfo {
@@ -15,17 +15,17 @@ public partial class MotionState : Node {
 	/// The moment in time, in milisecond ticks, when this state was activated; or 0 if it is not active.
 	/// </summary>
 	public ulong ActivationTime { get; private set; } = 0;
-    protected SuperPlatformerController Character { get; private set; } = null!;
+    protected SuperCharacterController2D Character { get; private set; } = null!;
 
 	public ulong DurationActiveMs => this.IsActive ? Time.GetTicksMsec() - this.ActivationTime : 0;
 	public bool IsActive => this.Character.CurrentState == this;
 
     public override void _EnterTree() {
         base._EnterTree();
-		if (this.GetParent() is SuperPlatformerController character) {
+		if (this.GetParent() is SuperCharacterController2D character) {
 			this.Character = character;
 		} else {
-			GD.PushError($"{nameof(MotionState)} node of type \"{this.GetType().Name}\" must be a child of {typeof(SuperPlatformerController).Name}");
+			GD.PushError($"{nameof(MotionState)} node of type \"{this.GetType().Name}\" must be a child of {typeof(SuperCharacterController2D).Name}");
 		}
 		this.Name = this.GetType().Name;
 	}
