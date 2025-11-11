@@ -12,7 +12,7 @@ public partial class FallingState : OnAirState
             this.Character.TransitionMotionState<LandingRecoveryState>();
         } else if (
             this.Character.IsOnWall()
-            && Math.Sign(this.Character.InputController.MovementInput.X) == Math.Sign(this.Character.GetWallNormal().X) * -1
+            && Math.Sign(this.Character.InputManager.MovementInput.X) == Math.Sign(this.Character.GetWallNormal().X) * -1
         ) {
             this.Character.TransitionMotionState<WallClimbingState>();
         }

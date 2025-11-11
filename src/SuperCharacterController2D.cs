@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 namespace Raele.SuperCharacterController2D;
 
-public partial class SuperCharacterController2D : CharacterBody2D {
+public partial class SuperCharacterController2D : CharacterBody2D
+{
 	// -----------------------------------------------------------------------------------------------------------------
 	// EXPORTED FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
@@ -104,7 +105,7 @@ public partial class SuperCharacterController2D : CharacterBody2D {
 	/// incremented every time the character starts a dash and is reset when the character lands on the floor.
 	/// </summary>
 	public int AirDashesPerformedCounter = 0;
-	public SuperCharacterController2DInputManager InputController { get; private set; } = null!; // Initialized on _Ready
+	public SuperCharacterController2DInputManager InputManager { get; private set; } = null!; // Initialized on _Ready
 	public Vector2 LastOnFloorPosition { get; private set; }
 	private readonly Dictionary<string, MotionState> StateDict = [];
 	private int _facingDirection = 0;
@@ -116,14 +117,28 @@ public partial class SuperCharacterController2D : CharacterBody2D {
 	public bool IsFacingLeft => this.FacingDirection < 0;
 	public bool IsFacingRight => this.FacingDirection > 0;
 	public bool IsFacingNeutral => this.FacingDirection == 0;
+	public bool IsOnSlope => this.IsOnFloor() && this.GetFloorAngle() > 0f;
 	/// <summary>
 	/// Determines the direction the character is facing. Any value lower than 0 means the character is facing left,
 	/// any value greater than 0 means the character is facing right, and 0 means the character is not facing any.
 	/// A value of 0 might be used if, for example, the character is facing the camera or away from the camera.
 	/// </summary>
-	public int FacingDirection {
+	public int FacingDirection
+	{
 		get => this._facingDirection;
 		set => this._facingDirection = Math.Sign(value);
+	}
+
+	public float VelocityX
+	{
+		get => this.Velocity.X;
+		set => this.Velocity = new Vector2(value, this.Velocity.Y);
+	}
+
+	public float VelocityY
+	{
+		get => this.Velocity.Y;
+		set => this.Velocity = new Vector2(this.Velocity.X, value);
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------
@@ -133,7 +148,7 @@ public partial class SuperCharacterController2D : CharacterBody2D {
 	public override void _Ready() {
 		base._Ready();
 		this.RegisterBuiltinMotionStates();
-		this.InputController = new SuperCharacterController2DInputManager(this);
+		this.InputManager = new SuperCharacterController2DInputManager(this);
 		this.InputSettings ??= new Platformer2DInputSettings();
 		this.MovementSettings ??= new Platformer2DMovementSettings();
 		this.JumpSettings ??= new Platformer2DJumpSettings();
@@ -177,7 +192,7 @@ public partial class SuperCharacterController2D : CharacterBody2D {
 
 	public override void _Process(double delta) {
 		base._Process(delta);
-		this.InputController.Update();
+		this.InputManager.Update();
 		this.UpdateLastOnFloorPosition();
 		this.UpdateFacing();
 		this.CurrentState?.OnProcessState((float)delta);
@@ -195,8 +210,8 @@ public partial class SuperCharacterController2D : CharacterBody2D {
 	{
 		if (
 			Math.Abs(this.Velocity.X) > Mathf.Epsilon
-			&& Math.Abs(this.InputController.MovementInput.X) > Mathf.Epsilon
-			&& Math.Sign(this.Velocity.X) == Math.Sign(this.InputController.MovementInput.X)
+			&& Math.Abs(this.InputManager.MovementInput.X) > Mathf.Epsilon
+			&& Math.Sign(this.Velocity.X) == Math.Sign(this.InputManager.MovementInput.X)
 		)
 		{
 			this.FacingDirection = Math.Sign(this.Velocity.X);
@@ -210,9 +225,10 @@ public partial class SuperCharacterController2D : CharacterBody2D {
 	}
 
 	public void TransitionMotionState<T>(Variant? data = null) where T : MotionState
-	{
-		this.TransitionMotionState(typeof(T).Name, data);
-	}
+		=> this.TransitionMotionState(typeof(T).Name, data);
+
+	public void TransitionMotionState(SuperCharacterController2DState state, Variant? data = null)
+		=> this.TransitionMotionState(state.Name, data);
 
 	public void TransitionMotionState(string nextStateName, Variant? data = null)
 	{

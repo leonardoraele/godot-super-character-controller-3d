@@ -5,9 +5,9 @@ public partial class GroundControlState : GroundedState
     public override void OnProcessState(float delta)
     {
 		base.OnProcessState(delta);
-		if (this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
+		if (this.Character.InputManager.JumpInputBuffer.ConsumeInput()) {
 			this.Character.TransitionMotionState<JumpWindupState>();
-		} else if (this.Character.InputController.DashInputBuffer.ConsumeInput()) {
+		} else if (this.Character.InputManager.DashInputBuffer.ConsumeInput()) {
 			this.Character.TransitionMotionState<GroundDashingState>();
 		}
     }

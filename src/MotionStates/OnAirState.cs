@@ -13,7 +13,7 @@ public abstract partial class OnAirState : MotionState
         base.OnProcessState(delta);
 		// Transition Air -> Dash
 		if (this.Character.AirDashesPerformedCounter < (this.Character.DashSettings?.MaxAirDashCount ?? 0)
-			&& this.Character.InputController.DashInputBuffer.ConsumeInput()
+			&& this.Character.InputManager.DashInputBuffer.ConsumeInput()
 		) {
 			this.Character.TransitionMotionState<AirDashingState>();
 		}

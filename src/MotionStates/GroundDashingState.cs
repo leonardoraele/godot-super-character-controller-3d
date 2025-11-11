@@ -23,7 +23,7 @@ public partial class GroundDashingState : GroundedState
 		} else if (this.Character.DashSettings != null && this.Character.DashSettings.VariableDashLength) {
 			if (!Input.IsActionPressed(this.Character.InputSettings.DashAction)) {
 				this.Character.TransitionMotionState<GroundControlState>();
-			} else if (this.Character.InputController.JumpInputBuffer.ConsumeInput()) {
+			} else if (this.Character.InputManager.JumpInputBuffer.ConsumeInput()) {
 				this.Character.TransitionMotionState<JumpingState>();
 			}
 		}

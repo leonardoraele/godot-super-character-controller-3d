@@ -17,10 +17,10 @@ public partial class WallClimbingState : OnWallState
     public override void OnPhysicsProcessState(float delta)
     {
         base.OnPhysicsProcessState(delta);
-		float targetVelocityY = this.Character.InputController.MovementInput.Y
+		float targetVelocityY = this.Character.InputManager.MovementInput.Y
 			* (
-				this.Character.InputController.MovementInput.Y > 0 ? this.Character.WallMotionSettings!.DownardClimbMaxSpeed
-					: this.Character.InputController.MovementInput.Y < 0 ? this.Character.WallMotionSettings!.UpwardClimbMaxSpeedPxPSec
+				this.Character.InputManager.MovementInput.Y > 0 ? this.Character.WallMotionSettings!.DownardClimbMaxSpeed
+					: this.Character.InputManager.MovementInput.Y < 0 ? this.Character.WallMotionSettings!.UpwardClimbMaxSpeedPxPSec
 					: 0
 			);
 		float accelerationY = targetVelocityY == 0 ? float.PositiveInfinity

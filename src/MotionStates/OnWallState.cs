@@ -9,8 +9,8 @@ public partial class OnWallState : MotionState
 	private float WallDropInputTimeMs;
 
 	public bool IsPlayerInputToDropFromWall => this.Character.WallDropPreventionLeniencyMs >= 0
-		? Math.Sign(this.Character.InputController.MovementInput.X) == this.WallDirection * -1
-		: Math.Sign(this.Character.InputController.MovementInput.X) != this.WallDirection;
+		? Math.Sign(this.Character.InputManager.MovementInput.X) == this.WallDirection * -1
+		: Math.Sign(this.Character.InputManager.MovementInput.X) != this.WallDirection;
 
 	public override void OnEnter(MotionState.TransitionInfo transition)
 	{
@@ -54,7 +54,7 @@ public partial class OnWallState : MotionState
 		}
 
 		// If player input is to jump, jump off the wall with a starting kickoff speed
-		if (this.Character.InputController.JumpInputBuffer.ConsumeInput())
+		if (this.Character.InputManager.JumpInputBuffer.ConsumeInput())
 		{
 			this.Character.Velocity = Vector2.Right * this.WallDirection * -1 * this.Character.WallMotionSettings.WallJumpKickoffSpeedPxPSec;
 			this.Character.TransitionMotionState<JumpingState>();

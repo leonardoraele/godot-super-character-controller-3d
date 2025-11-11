@@ -18,7 +18,7 @@ public partial class LandingRecoveryState : GroundedState
             this.Character.TransitionMotionState<GroundControlState>();
         } else if (
             this.Character.JumpSettings.DashingCancelsLandingRecovery
-            && this.Character.InputController.DashInputBuffer.ConsumeInput()
+            && this.Character.InputManager.DashInputBuffer.ConsumeInput()
         ) {
             this.Character.TransitionMotionState<GroundDashingState>();
         }

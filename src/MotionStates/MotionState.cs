@@ -66,10 +66,10 @@ public partial class MotionState : Node {
 		float normalDecelerationPxPSecSq,
 		float turnDecelerationPxPSecSq
 	) {
-		float velocityX = maxSpeedPxPSec * this.Character.InputController.MovementInput.X;
+		float velocityX = maxSpeedPxPSec * this.Character.InputManager.MovementInput.X;
 		float accelerationX =
 			Math.Abs(velocityX) > Math.Abs(this.Character.Velocity.X) ? accelerationPxPSecSq * delta
-			: this.Character.InputController.MovementInput.X == 1 * Math.Sign(this.Character.Velocity.X)
+			: this.Character.InputManager.MovementInput.X == 1 * Math.Sign(this.Character.Velocity.X)
 			? normalDecelerationPxPSecSq * delta
 			: turnDecelerationPxPSecSq * delta;
 		return (velocityX, accelerationX);
