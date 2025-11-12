@@ -1,7 +1,7 @@
 using Godot;
 using Raele.GodotUtils;
 
-namespace Raele.SuperCharacterController2D.StateControllers;
+namespace Raele.Supercon2D.StateControllers;
 
 public partial class StateController : Node
 {
@@ -9,9 +9,10 @@ public partial class StateController : Node
 	// PROPERTIES
 	// -----------------------------------------------------------------------------------------------------------------
 
-	public SuperCharacterController2DState State = null!; // initialized in _EnterTree()
-	public SuperCharacterController2D Character => this.State.Character;
-	public SuperCharacterController2DInputManager InputManager => this.Character.InputManager;
+	public SuperconState State => field != null ? field : field = this.RequireAncestor<SuperconState>();
+	public SuperconBody2D Character => this.State.Character;
+	public SuperconInputManager InputManager => this.Character.InputManager;
+	public SuperconStateMachine StateMachine => this.Character.StateMachine;
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// GODOT EVENTS
@@ -20,7 +21,6 @@ public partial class StateController : Node
 	public override void _EnterTree()
 	{
 		base._EnterTree();
-		this.State = this.RequireAncestor<SuperCharacterController2DState>();
 		this.State.StateEntered += this._EnterState;
 		this.State.StateExited += this._ExitState;
 	}
@@ -28,7 +28,7 @@ public partial class StateController : Node
 	public override void _Process(double delta)
 	{
 		base._Process(delta);
-		if (this.State?.IsActive == true)
+		if (this.State.IsActive == true)
 		{
 			this._ProcessActive(delta);
 		}

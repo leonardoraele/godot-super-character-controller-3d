@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using Raele.GodotUtils;
 
-namespace Raele.SuperCharacterController2D;
+namespace Raele.Supercon2D;
 
-public class SuperCharacterController2DInputManager
+public partial class SuperconInputManager : Node
 {
 	// -----------------------------------------------------------------------------------------------------------------
 	// LOCAL TYPES
@@ -13,19 +14,19 @@ public class SuperCharacterController2DInputManager
 	public class InputBuffer
 	{
 		public ulong LastInputTime { get; private set; } = 0;
-		public bool IsInputBuffered => this.LastInputTime >= Time.GetTicksMsec() - this.InputBufferDurationMs();
+		public bool IsInputBuffered => this.LastInputTime >= Time.GetTicksMsec() - this.InputBufferDurationMs().TotalMilliseconds;
 		// The respon why we get these variables as functions instead of plain values is so that we can always get the
 		// most updated value, since they might change at runtime if the user tweaks with the inspector variables.
 		// TODO A possible optimization would be to save the buffer duration and input action name in a field if game
 		// was build for production so we don't need to call an anonymous function every frame; but I don't know how to
 		// use (of if it's suppoerted) build-time variables.
-		public Func<ulong> InputBufferDurationMs { get; init; } = () => 0;
+		public Func<TimeSpan> InputBufferDurationMs { get; init; } = () => TimeSpan.Zero;
 		public Func<string> InputActionName { get; init; } = () => "";
 		public bool ConsumeInput()
 		{
-			bool result = this.IsInputBuffered;
+			bool isBuffered = this.IsInputBuffered;
 			this.LastInputTime = 0;
-			return result;
+			return isBuffered;
 		}
 		public void Update()
 		{
@@ -38,37 +39,66 @@ public class SuperCharacterController2DInputManager
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------
+	// EXPORTS
+	// -----------------------------------------------------------------------------------------------------------------
+
+	[Export]
+	public bool Enabled
+	{
+		get;
+		set
+		{
+			if (!value)
+			{
+				this.MovementInput = Vector2.Zero;
+				foreach (InputBuffer buffer in this.InputBuffers.Values)
+				{
+					buffer.ConsumeInput();
+				}
+			}
+			field = value;
+		}
+	} = true;
+
+	[ExportGroup("Movement InputAction Names")]
+	[Export] public string MoveLeftAction = "character_left";
+	[Export] public string MoveRightAction = "character_right";
+	[Export] public string MoveUpAction = "character_up";
+	[Export] public string MoveDownAction = "character_down";
+
+	[ExportGroup("Input Buffer Settings")]
+	[Export] public int InputBufferDurationMs = 150;
+
+	// -----------------------------------------------------------------------------------------------------------------
 	// FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
 
 	public Vector2 MovementInput { get; private set; }
-	[Obsolete("Use GetInputBuffer instead.")]
-	public InputBuffer JumpInputBuffer { get; private set; }
-	[Obsolete("Use GetInputBuffer instead.")]
-	public InputBuffer DashInputBuffer { get; private set; }
+	public SuperconBody2D Character => field != null ? field : field = this.RequireAncestor<SuperconBody2D>();
 
-	public bool Enabled = true;
-	private ulong EnabledUntilTime = 0;
-	private SuperCharacterController2D Character;
 	private Dictionary<string, InputBuffer> InputBuffers = new();
 
 	// -----------------------------------------------------------------------------------------------------------------
-	// CONSTRUCTOR
+	// GODOT EVENTS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	public SuperCharacterController2DInputManager(SuperCharacterController2D character)
+	public override void _Process(double delta)
 	{
-		this.Character = character;
-		this.JumpInputBuffer = new InputBuffer()
+		base._Process(delta);
+		if (!this.Enabled)
 		{
-			InputBufferDurationMs = () => this.Character.JumpInputBufferSensitivityMs,
-			InputActionName = () => this.Character.InputSettings.JumpAction
-		};
-		this.DashInputBuffer = new InputBuffer()
+			return;
+		}
+		this.MovementInput = Input.GetVector(
+			this.MoveLeftAction,
+			this.MoveRightAction,
+			this.MoveUpAction,
+			this.MoveDownAction
+		);
+		foreach (InputBuffer buffer in this.InputBuffers.Values)
 		{
-			InputBufferDurationMs = () => this.Character.DashInputBufferSensitivityMs,
-			InputActionName = () => this.Character.InputSettings.DashAction
-		};
+			buffer.Update();
+		}
 	}
 
 	// -----------------------------------------------------------------------------------------------------------------
@@ -81,32 +111,10 @@ public class SuperCharacterController2DInputManager
 		{
 			this.InputBuffers[name] = new InputBuffer()
 			{
-				InputBufferDurationMs = () => 150, // TODO Should this be configurable per action?
+				InputBufferDurationMs = () => TimeSpan.FromMilliseconds(this.InputBufferDurationMs),
 				InputActionName = () => name,
 			};
 		}
 		return this.InputBuffers[name];
-	}
-
-	public void Update()
-	{
-		if (this.EnabledUntilTime > 0 && Time.GetTicksMsec() >= this.EnabledUntilTime)
-		{
-			this.Enabled = false;
-			this.EnabledUntilTime = 0;
-		}
-		if (!this.Enabled)
-		{
-			this.MovementInput = Vector2.Zero;
-			return;
-		}
-		this.MovementInput = Input.GetVector(
-			this.Character.InputSettings.MoveLeftAction,
-			this.Character.InputSettings.MoveRightAction,
-			this.Character.InputSettings.MoveUpAction,
-			this.Character.InputSettings.MoveDownAction
-		);
-		this.JumpInputBuffer.Update();
-		this.DashInputBuffer.Update();
 	}
 }

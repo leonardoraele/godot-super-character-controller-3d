@@ -1,0 +1,8 @@
+<Project Sdk="Godot.NET.Sdk/4.5.0">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>Raele.Supercon2D</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>

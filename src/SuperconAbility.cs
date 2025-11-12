@@ -1,9 +1,9 @@
 using System;
 using Godot;
 
-namespace Raele.SuperCharacterController2D;
+namespace Raele.Supercon2D;
 
-public partial class SuperCharacterController2DAbility : Node
+public partial class SuperconAbility : Resource
 {
 	// -----------------------------------------------------------------------------------------------------------------
 	// EXPORTS
@@ -21,13 +21,14 @@ public partial class SuperCharacterController2DAbility : Node
 	// SIGNALS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	[Signal] public delegate void AbilityUsedEventHandler(SuperCharacterController2DAbility ability);
-	[Signal] public delegate void AbilityRechargedEventHandler(SuperCharacterController2DAbility ability);
+	[Signal] public delegate void AbilityUsedEventHandler(SuperconAbility ability);
+	[Signal] public delegate void AbilityRechargedEventHandler(SuperconAbility ability);
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// FIELDS
 	// -----------------------------------------------------------------------------------------------------------------
 
+	private object? test;
 	public int UseCount { get; private set; } = 0;
 	public TimeSpan AccumulatedUseTime { get; private set; } = TimeSpan.Zero;
 

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Raele.SuperCharacterController2D;
+namespace Raele.Supercon2D;
 
 [GlobalClass]
 public partial class Platformer2DJumpSettings : Resource

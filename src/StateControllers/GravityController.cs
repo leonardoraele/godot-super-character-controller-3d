@@ -1,7 +1,6 @@
-using System;
 using Godot;
 
-namespace Raele.SuperCharacterController2D.StateControllers;
+namespace Raele.Supercon2D.StateControllers;
 
 public partial class GravityController : StateController
 {
@@ -22,8 +21,8 @@ public partial class GravityController : StateController
 
 		if (!this.Character.IsOnFloor())
 		{
-			float velocityY = this.Character.JumpSettings.MaxFallSpeedPxPSec;
-			float accelerationY = this.Character.JumpSettings.FallAccelerationPxPSecSq;
+			float velocityY = this.MaxDownwardSpeedPxPSec;
+			float accelerationY = this.AccelerationPxPSecSqr;
 			this.Character.AccelerateY(velocityY, accelerationY);
 		}
 	}

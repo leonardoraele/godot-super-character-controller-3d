@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace Raele.SuperCharacterController2D.StateControllers;
+namespace Raele.Supercon2D.StateControllers;
 
 public partial class InputActionTransition : StateController
 {
@@ -31,7 +31,7 @@ public partial class InputActionTransition : StateController
 	/// Name of the input action to be read for this ability.
 	/// </summary>
 	[Export] public string? InputActionName;
-	[Export] public SuperCharacterController2DState? TargetState;
+	[Export] public SuperconState? TargetState;
 	[Export] public AbilityActivationMode InputMode = AbilityActivationMode.InputIsJustDown;
 
 	// [ExportGroup("Activated State End Override")]
@@ -58,12 +58,12 @@ public partial class InputActionTransition : StateController
 	/// <summary>
 	/// If set, this ability can only be activated if the previous active this.State was the one specified here.
 	/// </summary>
-	[Export] public SuperCharacterController2DState? PreviousState;
+	[Export] public SuperconState? PreviousState;
 	/// <summary>
 	/// Time in milliseconds to buffer input for this ability. Set to 0 to disable input buffering for this ability.
 	/// </summary>
 	[Export] public ulong InputBufferTimeMs = 150;
-	[Export] public SuperCharacterController2DAbility? Ability;
+	[Export] public SuperconAbility? Ability;
 
 	[ExportGroup("Action Canceling")]
 	[Export] public AbilityCancelingMode CancelingInputMode = AbilityCancelingMode.Never;
@@ -73,7 +73,7 @@ public partial class InputActionTransition : StateController
 	/// If the input mode is Trigger, this property is ignored. If this property is null, the character will not be
 	/// transitioned to another this.State when the ability is canceled.
 	/// </summary>
-	[Export] public SuperCharacterController2DState? StateTransitionOnAbilityCanceled;
+	[Export] public SuperconState? StateTransitionOnAbilityCanceled;
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// FIELDS
@@ -111,11 +111,11 @@ public partial class InputActionTransition : StateController
 			}
 			GD.PrintS(Time.GetTicksMsec(), nameof(InputActionTransition), ":", "⚡", "Action triggered.", "State:", this.State.Name, "Action:", this.InputActionName, "Transition:", this.TargetState);
 			this.CancelActionCheckActive = true;
-			this.Character.TransitionMotionState(this.TargetState.Name);
+			this.StateMachine.QueueTransition(this.TargetState.Name);
 		}
 		else if (this.CancelActionCheckActive)
 		{
-			if (this.Character.CurrentState != this.TargetState || !this.State.IsPreviousActiveState)
+			if (this.StateMachine.ActiveState != this.TargetState || !this.State.IsPreviousActiveState)
 			{
 				this.CancelActionCheckActive = false;
 				return;
@@ -131,7 +131,7 @@ public partial class InputActionTransition : StateController
 				{
 					GD.PrintS(Time.GetTicksMsec(), nameof(InputActionTransition), ":", "↩", "Ability canceled.", "State:", this.State.Name, "Action:", this.InputActionName);
 				}
-				this.Character.TransitionMotionState(this.StateTransitionOnAbilityCanceled ?? this.State);
+				this.StateMachine.QueueTransition(this.StateTransitionOnAbilityCanceled ?? this.State);
 			}
 		}
 	}
@@ -143,7 +143,7 @@ public partial class InputActionTransition : StateController
 			&& this.State.ActiveDuration.TotalMilliseconds < this.DisabledAfterTimeSec * 1000
 			&& (
 				this.PreviousState == null
-				|| this.Character.PreviousState == this.PreviousState
+				|| this.StateMachine.PreviousState == this.PreviousState
 			)
 			&& (
 				this.InputMode == AbilityActivationMode.InputIsDown

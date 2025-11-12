@@ -1,24 +1,35 @@
 using System;
 using Godot;
 
-namespace Raele.SuperCharacterController2D.StateControllers;
+namespace Raele.Supercon2D.StateControllers;
 
 public partial class HorizontalMovementController : StateController
 {
 	// -----------------------------------------------------------------------------------------------------------------
+	// LOCAL TYPES
+	// -----------------------------------------------------------------------------------------------------------------
+
+	public enum AutomaticMovementDirection : byte
+	{
+		None = 0,
+		Left = 1,
+		Right = 2
+	}
+
+	// -----------------------------------------------------------------------------------------------------------------
 	// EXPORTS
 	// -----------------------------------------------------------------------------------------------------------------
 
-	[Export] public float MaxSpeedPxPSec { get; set; } = 200f;
-	[Export] public float AccelerationPxPSecSqr { get; set; } = 200f;
+	[Export] public float MaxSpeedPxPSec { get; set; } = 600f;
+	[Export] public float AccelerationPxPSecSqr { get; set; } = 1200f;
 	/// <summary>
 	/// Deceleration when no input is given.
 	/// </summary>
-	[Export] public float SoftDecelerationPxPSecSqr { get; set; } = 400f;
+	[Export] public float SoftDecelerationPxPSecSqr { get; set; } = 1200f;
 	/// <summary>
 	/// Deceleration when current input is lower than the current speed or opposite to current movement direction.
 	/// </summary>
-	[Export] public float HardDecelerationPxPSecSqr { get; set; } = 800f;
+	[Export] public float HardDecelerationPxPSecSqr { get; set; } = 2400f;
 	/// <summary>
 	/// If true, this controller will also adjust the vertical velocity to follow slopes when on the ground. If false,
 	/// vertical velocity won't be modified.
@@ -35,12 +46,25 @@ public partial class HorizontalMovementController : StateController
 	/// If either direction is set, the character will move automatically to that direction as if the player was
 	/// constantly inputting the directional movement to that direction. Actual player input is ignored in this case.
 	/// </summary>
-	[Export(PropertyHint.Enum, "1:Left,2:Right")] public byte AutomaticMovement = 0;
+	[Export] public AutomaticMovementDirection AutomaticMovement = AutomaticMovementDirection.None;
 	/// <summary>
 	/// If true, inverts the direction of movement.
 	/// (useful to implement things like status effects that reverse controls)
 	/// </summary>
 	[Export] public bool InvertDirections = false;
+
+	// -----------------------------------------------------------------------------------------------------------------
+	// PROPERTIES
+	// -----------------------------------------------------------------------------------------------------------------
+
+	private Vector2 ResolvedInput
+		=> this.AutomaticMovement switch
+			{
+				AutomaticMovementDirection.Left => Vector2.Left,
+				AutomaticMovementDirection.Right => Vector2.Right,
+				_ => this.Character.InputManager.MovementInput
+			}
+			* (this.InvertDirections ? -1 : 1);
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// PUBLIC METHODS
@@ -55,13 +79,15 @@ public partial class HorizontalMovementController : StateController
 
 	private void CalculateHorizontalPhysics(float delta)
 	{
-		float velocityX = this.MaxSpeedPxPSec * this.Character.InputManager.MovementInput.X;
+		float targetVelocityX = this.MaxSpeedPxPSec * this.ResolvedInput.X;
 		float accelerationX =
-			Math.Abs(velocityX) > Math.Abs(this.Character.Velocity.X) ? this.AccelerationPxPSecSqr * delta
-			: this.Character.InputManager.MovementInput.X == 1 * Math.Sign(this.Character.Velocity.X)
-			? this.SoftDecelerationPxPSecSqr * delta
+			Math.Abs(this.Character.Velocity.X) < float.Epsilon
+			|| Math.Abs(targetVelocityX) > Math.Abs(this.Character.Velocity.X)
+				&& Math.Sign(targetVelocityX) == Math.Sign(this.Character.Velocity.X)
+				? this.AccelerationPxPSecSqr * delta
+			: Math.Abs(this.ResolvedInput.X) < float.Epsilon ? this.SoftDecelerationPxPSecSqr * delta
 			: this.HardDecelerationPxPSecSqr * delta;
-		this.Character.AccelerateX(velocityX, accelerationX);
+		this.Character.AccelerateX(targetVelocityX, accelerationX);
 	}
 
 	private void CalculateVerticalPhysics()

@@ -1,27 +1,17 @@
 using System;
 using Godot;
+using Raele.GodotUtils;
 
-namespace Raele.SuperCharacterController2D;
+namespace Raele.Supercon2D;
 
-public partial class SuperCharacterController2DDebugger : Control
+public partial class SuperconDebugger : Control
 {
 	[Export] private string ToggleVisibilityInputAction = "ui_menu";
 
-    private SuperCharacterController2D Character = null!;
+    private SuperconBody2D Character => field != null ? field : field = this.RequireAncestor<SuperconBody2D>();
 
-    public override void _Ready()
+	public override void _Ready()
     {
-		if (this.GetParent() is SuperCharacterController2D characterController) {
-			this.Character = characterController;
-		} else {
-			GD.PushWarning(
-				"Failed to setup CharacterController2DDebugger.",
-				"Cause: It should be a child of a BasicCharacterController.",
-				"This node will remove itself from the scene."
-			);
-			this.QueueFree();
-			return;
-		}
 		this.ZIndex = 1000;
 		this.Visible = false;
 		this.ProcessMode = ProcessModeEnum.Always;
@@ -51,7 +41,7 @@ public partial class SuperCharacterController2DDebugger : Control
 		if (this.Character.IsOnWall()) {
 			this.DrawLine(this.Character.Velocity.Normalized() * 32, this.Character.Velocity.Normalized() * 32 + this.Character.GetWallNormal() * 8, Colors.White, 1, true);
 		}
-		this.DrawString(ThemeDB.FallbackFont, Vector2.Down * 8, this.Character.CurrentState?.Name ?? "null state", default, default, 8, Colors.White);
+		this.DrawString(ThemeDB.FallbackFont, Vector2.Down * 8, this.Character.StateMachine.ActiveState?.Name ?? "null state", default, default, 8, Colors.White);
     }
 
     public override void _Process(double delta)
